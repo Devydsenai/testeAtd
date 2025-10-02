@@ -52,6 +52,9 @@ export const SearchInput = styled.TextInput`
     padding: 12px 16px 12px 8px;
     font-size: 16px;
     color: ${colors.black};
+    border-width: 0px;
+    outline-style: none;
+    underlineColorAndroid: transparent;
 `;
 
 export const FilterContainer = styled.View`
@@ -229,7 +232,9 @@ export const ModalInput = styled.TextInput`
     border-radius: 12px;
     font-size: 16px;
     color: ${colors.black};
-    border: 1px solid ${colors.grayLight};
+    border-width: 0px;
+    outline-style: none;
+    underlineColorAndroid: transparent;
 `;
 
 export const ModalButtonContainer = styled.View`

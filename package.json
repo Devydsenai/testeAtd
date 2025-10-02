@@ -6,7 +6,10 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "dev": "nodemon server.js",
+    "server": "node server.js",
+    "server:dev": "nodemon server.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
@@ -43,6 +46,7 @@
     "@types/styled-components": "^5.1.0",
     "babel-preset-expo": "^54.0.3",
     "metro-react-native-babel-transformer": "^0.77.0",
+    "nodemon": "^3.0.2",
     "react-native-svg-transformer": "^1.5.1",
     "typescript": "~5.9.2"
   },

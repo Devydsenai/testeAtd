@@ -4,6 +4,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors } from '../../core/core';
 import apiService, { type Cliente, type ClienteForm } from '../../../API';
+import ClienteItem from '../../Components/ClienteItem';
 
 // Importar ícones SVG
 import HomeIcon from '../../assets/home.svg';
@@ -63,7 +64,10 @@ export default function Home() {
         nome: '',
         email: '',
         telefone: '',
-        ativo: true
+        ativo: true,
+        avatar: '',
+        favorito: false,
+        avaliacao: 0
     });
 
     // Carregar clientes iniciais
@@ -149,7 +153,10 @@ export default function Home() {
             nome: '',
             email: '',
             telefone: '',
-            ativo: true
+            ativo: true,
+            avatar: '',
+            favorito: false,
+            avaliacao: 0
         });
         setEditingClient(null);
     };
@@ -164,7 +171,10 @@ export default function Home() {
             nome: cliente.nome,
             email: cliente.email,
             telefone: cliente.telefone || '',
-            ativo: cliente.ativo
+            ativo: cliente.ativo,
+            avatar: cliente.avatar || '',
+            favorito: cliente.favorito,
+            avaliacao: cliente.avaliacao
         });
         setEditingClient(cliente);
         setShowModal(true);
@@ -413,6 +423,26 @@ export default function Home() {
         }
     };
 
+    const handleToggleFavorite = async (codigo: number, favorito: boolean) => {
+        try {
+            await apiService.toggleFavoriteCliente(codigo, favorito);
+            await loadClientes();
+        } catch (error) {
+            console.error('Erro ao atualizar favorito:', error);
+            Alert.alert('Erro', 'Erro ao atualizar favorito');
+        }
+    };
+
+    const handleRatingChange = async (codigo: number, avaliacao: number) => {
+        try {
+            await apiService.updateAvaliacaoCliente(codigo, avaliacao);
+            await loadClientes();
+        } catch (error) {
+            console.error('Erro ao atualizar avaliação:', error);
+            Alert.alert('Erro', 'Erro ao atualizar avaliação');
+        }
+    };
+
     const handleSearchChange = (text: string) => {
         setSearchTerm(text);
     };
@@ -467,12 +497,16 @@ export default function Home() {
                 <SearchInputContainer>
                     <SearchIcon width={20} height={20} fill={colors.grayMedium} />
                     <SearchInput
-                        placeholder="Buscar clientes por nome, email ou telefone..."
+                        placeholder={!searchTerm || searchTerm.trim() === '' ? "Buscar clientes por nome, email ou telefone..." : ''}
                         value={searchTerm}
                         onChangeText={handleSearchChange}
                         keyboardType="default"
                         autoCapitalize="none"
                         autoCorrect={false}
+                        autoComplete="off"
+                        autoCompleteType="off"
+                        textContentType="none"
+                        importantForAutofill="no"
                     />
                 </SearchInputContainer>
                 {searchTerm.trim() && (
@@ -503,52 +537,11 @@ export default function Home() {
                         data={filteredClientes}
                         keyExtractor={(item) => item.codigo.toString()}
                         renderItem={({ item }) => (
-                            <ClientCard>
-                                <ClientInfo>
-                                    <ClientName>{item.nome}</ClientName>
-                                    <ClientEmail>{item.email}</ClientEmail>
-                                    {item.telefone && <ClientPhone>{item.telefone}</ClientPhone>}
-                                    <ClientPhone status={
-                                        item.deleted ? 'deleted' : 
-                                        (item.ativo ? 'active' : 'inactive')
-                                    }>
-                                        {item.deleted ? 'Deletado' : 
-                                         (item.ativo ? 'Ativo' : 'Inativo')}
-                                    </ClientPhone>
-                                </ClientInfo>
-                                <ClientActions>
-                                    {item.deleted ? (
-                                            // Botões para clientes deletados
-                                            <>
-                                                <RestoreButton onPress={() => handleRestoreClient(item.codigo)}>
-                                                    <ActionButtonText>Restaurar</ActionButtonText>
-                                                </RestoreButton>
-                                                <DeleteButton onPress={() => handleDeleteClient(item.codigo)}>
-                                                    <ActionButtonText>Deletar Definitivamente</ActionButtonText>
-                                                </DeleteButton>
-                                            </>
-                                        ) : (
-                                        // Botões para clientes não deletados
-                                        <>
-                                            <ActionButton
-                                                onPress={() => openEditModal(item)}
-                                            >
-                                                <ActionButtonText>Editar</ActionButtonText>
-                                            </ActionButton>
-                                            {item.ativo && (
-                                                <DeleteButton onPress={() => handleDeactivateClient(item.codigo)}>
-                                                    <ActionButtonText>Desativar</ActionButtonText>
-                                                </DeleteButton>
-                                            )}
-                                            <DeleteButton
-                                                onPress={() => handleSoftDelete(item.codigo)}
-                                            >
-                                                <ActionButtonText>Deletar</ActionButtonText>
-                                            </DeleteButton>
-                                        </>
-                                    )}
-                                </ClientActions>
-                            </ClientCard>
+                            <ClienteItem
+                                data={item}
+                                onToggleFavorite={handleToggleFavorite}
+                                onRatingChange={handleRatingChange}
+                            />
                         )}
                         showsVerticalScrollIndicator={false}
                         ListFooterComponent={() => (
@@ -584,25 +577,48 @@ export default function Home() {
 
                                 <ModalFormContainer>
                                     <ModalInput
-                                        placeholder="Nome completo *"
+                                        placeholder={formData.nome && formData.nome.length > 0 ? '' : "Nome completo *"}
                                         value={formData.nome}
                                         onChangeText={(text) => setFormData({ ...formData, nome: text })}
                                         autoCapitalize="words"
+                                        autoComplete="off"
+                                        autoCompleteType="off"
+                                        textContentType="none"
+                                        importantForAutofill="no"
                                     />
 
                                     <ModalInput
-                                        placeholder="Email *"
+                                        placeholder={formData.email && formData.email.length > 0 ? '' : "Email *"}
                                         value={formData.email}
                                         onChangeText={(text) => setFormData({ ...formData, email: text })}
                                         keyboardType="email-address"
                                         autoCapitalize="none"
+                                        autoComplete="off"
+                                        autoCompleteType="off"
+                                        textContentType="none"
+                                        importantForAutofill="no"
                                     />
 
                                     <ModalInput
-                                        placeholder="Telefone"
+                                        placeholder={formData.telefone && formData.telefone.length > 0 ? '' : "Telefone"}
                                         value={formData.telefone || ''}
                                         onChangeText={(text) => setFormData({ ...formData, telefone: text })}
                                         keyboardType="phone-pad"
+                                        autoComplete="off"
+                                        autoCompleteType="off"
+                                        textContentType="none"
+                                        importantForAutofill="no"
+                                    />
+
+                                    <ModalInput
+                                        placeholder={formData.avatar && formData.avatar.length > 0 ? '' : "URL do Avatar (opcional)"}
+                                        value={formData.avatar || ''}
+                                        onChangeText={(text) => setFormData({ ...formData, avatar: text })}
+                                        autoCapitalize="none"
+                                        autoComplete="off"
+                                        autoCompleteType="off"
+                                        textContentType="none"
+                                        importantForAutofill="no"
                                     />
                                 </ModalFormContainer>
 

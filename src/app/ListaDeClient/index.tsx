@@ -332,12 +332,16 @@ export default function ListaDeClient() {
                 <SearchInputContainer>
                     <SearchIcon width={20} height={20} fill={colors.grayMedium} />
                     <SearchInput
-                        placeholder="Buscar clientes por nome, email ou telefone..."
+                        placeholder={!searchTerm || searchTerm.trim() === '' ? "Buscar clientes por nome, email ou telefone..." : ''}
                         value={searchTerm}
                         onChangeText={setSearchTerm}
                         keyboardType="default"
                         autoCapitalize="none"
                         autoCorrect={false}
+                        autoComplete="off"
+                        autoCompleteType="off"
+                        textContentType="none"
+                        importantForAutofill="no"
                     />
                 </SearchInputContainer>
             </SearchContainer>
@@ -452,25 +456,37 @@ export default function ListaDeClient() {
 
                                 <ModalFormContainer>
                                     <ModalInput
-                                        placeholder="Nome completo *"
+                                        placeholder={!formData.nome || formData.nome.trim() === '' ? "Nome completo *" : ''}
                                         value={formData.nome}
                                         onChangeText={(text) => setFormData({ ...formData, nome: text })}
                                         autoCapitalize="words"
+                                        autoComplete="off"
+                                        autoCompleteType="off"
+                                        textContentType="none"
+                                        importantForAutofill="no"
                                     />
 
                                     <ModalInput
-                                        placeholder="Email *"
+                                        placeholder={!formData.email || formData.email.trim() === '' ? "Email *" : ''}
                                         value={formData.email}
                                         onChangeText={(text) => setFormData({ ...formData, email: text })}
                                         keyboardType="email-address"
                                         autoCapitalize="none"
+                                        autoComplete="off"
+                                        autoCompleteType="off"
+                                        textContentType="none"
+                                        importantForAutofill="no"
                                     />
 
                                     <ModalInput
-                                        placeholder="Telefone (opcional)"
+                                        placeholder={!formData.telefone || formData.telefone.trim() === '' ? "Telefone (opcional)" : ''}
                                         value={formData.telefone}
                                         onChangeText={(text) => setFormData({ ...formData, telefone: text })}
                                         keyboardType="phone-pad"
+                                        autoComplete="off"
+                                        autoCompleteType="off"
+                                        textContentType="none"
+                                        importantForAutofill="no"
                                     />
                                 </ModalFormContainer>
 

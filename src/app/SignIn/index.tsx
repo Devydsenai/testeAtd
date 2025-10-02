@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -42,10 +42,60 @@ export default function SignIn() {
                 }
             } catch (error) {
                 console.log('Erro no login:', error);
-                Alert.alert('Erro no login!', error instanceof Error ? error.message : 'Erro desconhecido');
+                
+                // Mensagens de erro mais específicas
+                if (error instanceof Error) {
+                    if (error.message.includes('E-mail ou senha incorretos')) {
+                        if (Platform.OS === 'web') {
+                            const result = window.confirm('Usuário não encontrado\n\nE-mail ou senha incorretos.\n\nVocê não é cadastrado? Faça seu cadastro!');
+                            if (result) {
+                                navigation.reset({ routes: [{ name: 'SignUp' }] });
+                            }
+                        } else {
+                            Alert.alert(
+                                'Usuário não encontrado', 
+                                'E-mail ou senha incorretos.\n\nVocê não é cadastrado? Faça seu cadastro!',
+                                [
+                                    { text: 'Tentar Novamente', style: 'cancel' },
+                                    { 
+                                        text: 'Fazer Cadastro', 
+                                        onPress: () => navigation.reset({ routes: [{ name: 'SignUp' }] })
+                                    }
+                                ]
+                            );
+                        }
+                    } else if (error.message.includes('Usuário não encontrado')) {
+                        if (Platform.OS === 'web') {
+                            const result = window.confirm('Usuário não cadastrado\n\nEste e-mail não está cadastrado em nosso sistema.\n\nFaça seu cadastro para continuar!');
+                            if (result) {
+                                navigation.reset({ routes: [{ name: 'SignUp' }] });
+                            }
+                        } else {
+                            Alert.alert(
+                                'Usuário não cadastrado', 
+                                'Este e-mail não está cadastrado em nosso sistema.\n\nFaça seu cadastro para continuar!',
+                                [
+                                    { text: 'Tentar Novamente', style: 'cancel' },
+                                    { 
+                                        text: 'Fazer Cadastro', 
+                                        onPress: () => navigation.reset({ routes: [{ name: 'SignUp' }] })
+                                    }
+                                ]
+                            );
+                        }
+                    } else {
+                        if (Platform.OS === 'web') {
+                            window.alert(`Erro no login!\n\n${error.message}`);
+                        } else {
+                            Alert.alert('Erro no login!', error.message);
+                        }
+                    }
+                } else {
+                    Alert.alert('Erro no login!', 'Erro desconhecido');
+                }
             }
         } else {
-            Alert.alert("Preencha os campos!");
+            Alert.alert("Preencha os campos!", "E-mail e senha são obrigatórios");
         }
     };
 
@@ -54,6 +104,7 @@ export default function SignIn() {
             routes: [{ name: 'SignUp' }]
         });
     };
+
 
     return (
         <Container>
