@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -40,21 +40,78 @@ export default function SignUp() {
                 });
                
                 if (res.token) {
-                    // Definir token via API (não AsyncStorage)
-                    apiService.setAuthToken(res.token);
+                    // Limpar campos do formulário
+                    setNameField('');
+                    setEmailField('');
+                    setPhoneField('');
+                    setPasswordField('');
 
-                    navigation.reset({
-                        routes: [{ name: 'MainTab' }]
-                    });
+                    // Mostrar mensagem de sucesso e redirecionar para login
+                    if (Platform.OS === 'web') {
+                        window.alert('Cadastro realizado com sucesso!\n\nSua conta foi criada. Agora faça login para continuar.');
+                        navigation.reset({
+                            routes: [{ name: 'SignIn' }]
+                        });
+                    } else {
+                        Alert.alert(
+                            'Cadastro realizado com sucesso!', 
+                            'Sua conta foi criada. Agora faça login para continuar.',
+                            [
+                                {
+                                    text: 'Fazer Login',
+                                    onPress: () => navigation.reset({
+                                        routes: [{ name: 'SignIn' }]
+                                    })
+                                }
+                            ]
+                        );
+                    }
                 } else {
                     Alert.alert("Erro", res.error || "Erro ao criar conta");
                 }
             } catch (error) {
                 console.log('Erro no cadastro:', error);
-                Alert.alert('Erro', error instanceof Error ? error.message : 'Erro ao criar conta');
+                
+                // Mensagens de erro mais específicas
+                if (error instanceof Error) {
+                    if (error.message.includes('E-mail já cadastrado')) {
+                        if (Platform.OS === 'web') {
+                            const result = window.confirm('E-mail já cadastrado\n\nEste e-mail já está sendo usado por outro usuário.\n\nTente fazer login ou use outro e-mail.');
+                            if (result) {
+                                navigation.reset({ routes: [{ name: 'SignIn' }] });
+                            }
+                        } else {
+                            Alert.alert(
+                                'E-mail já cadastrado', 
+                                'Este e-mail já está sendo usado por outro usuário.\n\nTente fazer login ou use outro e-mail.',
+                                [
+                                    { text: 'Tentar Novamente', style: 'cancel' },
+                                    { 
+                                        text: 'Fazer Login', 
+                                        onPress: () => navigation.reset({ routes: [{ name: 'SignIn' }] })
+                                    }
+                                ]
+                            );
+                        }
+                    } else if (error.message.includes('Dados inválidos')) {
+                        if (Platform.OS === 'web') {
+                            window.alert(`Dados inválidos\n\n${error.message}`);
+                        } else {
+                            Alert.alert('Dados inválidos', error.message);
+                        }
+                    } else {
+                        if (Platform.OS === 'web') {
+                            window.alert(`Erro no cadastro\n\n${error.message}`);
+                        } else {
+                            Alert.alert('Erro no cadastro', error.message);
+                        }
+                    }
+                } else {
+                    Alert.alert('Erro no cadastro', 'Erro desconhecido');
+                }
             }
         } else {
-            Alert.alert("Atenção", "Preencha todos os campos obrigatórios");
+            Alert.alert("Atenção", "Preencha todos os campos obrigatórios (Nome, E-mail e Senha)");
         }
     };
 

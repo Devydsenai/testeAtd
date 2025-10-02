@@ -8,6 +8,9 @@ interface Cliente {
   telefone?: string;
   ativo: boolean;
   deleted?: boolean;
+  avatar?: string;
+  favorito: boolean;
+  avaliacao: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -19,6 +22,9 @@ interface ClienteForm {
   telefone?: string;
   ativo?: boolean;
   deleted?: boolean;
+  avatar?: string;
+  favorito?: boolean;
+  avaliacao?: number;
 }
 
 // Interface para filtros de busca
@@ -773,6 +779,16 @@ Para resolver este problema:
         if (error.response?.status === 404) {
           throw new Error('Usuário não encontrado');
         }
+        // Verificar se há mensagem de erro específica do servidor
+        if (error.response?.data?.error) {
+          if (error.response.data.error === 'Usuário não encontrado') {
+            throw new Error('Usuário não encontrado');
+          } else if (error.response.data.error === 'Senha incorreta') {
+            throw new Error('E-mail ou senha incorretos');
+          } else {
+            throw new Error(error.response.data.error);
+          }
+        }
       }
       console.error('Erro no login:', error);
       throw new Error('Erro ao fazer login');
@@ -806,6 +822,48 @@ Para resolver este problema:
       }
       console.error('Erro no cadastro:', error);
       throw new Error('Erro ao criar conta');
+    }
+  }
+
+  /**
+   * Atualizar favorito de um cliente
+   */
+  async toggleFavoriteCliente(codigo: number, favorito: boolean): Promise<Cliente> {
+    try {
+      const userEmail = this.getCurrentUserEmail();
+      if (userEmail) {
+        this.axiosInstance.defaults.headers.common['x-user-email'] = userEmail;
+      }
+
+      const response: AxiosResponse<Cliente> = await this.axiosInstance.patch(`/clientes/${codigo}`, {
+        favorito
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao atualizar favorito:', error);
+      throw new Error('Erro ao atualizar favorito');
+    }
+  }
+
+  /**
+   * Atualizar avaliação de um cliente
+   */
+  async updateAvaliacaoCliente(codigo: number, avaliacao: number): Promise<Cliente> {
+    try {
+      const userEmail = this.getCurrentUserEmail();
+      if (userEmail) {
+        this.axiosInstance.defaults.headers.common['x-user-email'] = userEmail;
+      }
+
+      const response: AxiosResponse<Cliente> = await this.axiosInstance.patch(`/clientes/${codigo}`, {
+        avaliacao
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao atualizar avaliação:', error);
+      throw new Error('Erro ao atualizar avaliação');
     }
   }
 }

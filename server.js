@@ -39,6 +39,9 @@ async function initializeDatabase() {
         ativo BOOLEAN DEFAULT 1,
         deleted BOOLEAN DEFAULT 0,
         user_id INTEGER NOT NULL,
+        avatar TEXT,
+        favorito BOOLEAN DEFAULT 0,
+        avaliacao REAL DEFAULT 0,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users (id)
@@ -49,6 +52,9 @@ async function initializeDatabase() {
     const columns = await db.all(`PRAGMA table_info(clientes);`);
     const hasDeleted = columns.some(col => col.name === 'deleted');
     const hasUserId = columns.some(col => col.name === 'user_id');
+    const hasAvatar = columns.some(col => col.name === 'avatar');
+    const hasFavorito = columns.some(col => col.name === 'favorito');
+    const hasAvaliacao = columns.some(col => col.name === 'avaliacao');
     
     if (!hasDeleted) {
       try {
@@ -70,6 +76,39 @@ async function initializeDatabase() {
       }
     } else {
       console.log('Coluna "user_id" já existe na tabela clientes');
+    }
+    
+    if (!hasAvatar) {
+      try {
+        await db.exec(`ALTER TABLE clientes ADD COLUMN avatar TEXT;`);
+        console.log('Coluna "avatar" adicionada à tabela clientes');
+      } catch (error) {
+        console.log('Erro ao adicionar coluna "avatar":', error.message);
+      }
+    } else {
+      console.log('Coluna "avatar" já existe na tabela clientes');
+    }
+    
+    if (!hasFavorito) {
+      try {
+        await db.exec(`ALTER TABLE clientes ADD COLUMN favorito BOOLEAN DEFAULT 0;`);
+        console.log('Coluna "favorito" adicionada à tabela clientes');
+      } catch (error) {
+        console.log('Erro ao adicionar coluna "favorito":', error.message);
+      }
+    } else {
+      console.log('Coluna "favorito" já existe na tabela clientes');
+    }
+    
+    if (!hasAvaliacao) {
+      try {
+        await db.exec(`ALTER TABLE clientes ADD COLUMN avaliacao REAL DEFAULT 0;`);
+        console.log('Coluna "avaliacao" adicionada à tabela clientes');
+      } catch (error) {
+        console.log('Erro ao adicionar coluna "avaliacao":', error.message);
+      }
+    } else {
+      console.log('Coluna "avaliacao" já existe na tabela clientes');
     }
 
     await db.exec(`
@@ -293,9 +332,9 @@ app.get('/clientes/:codigo', extractUserFromToken, async (req, res) => {
 // 6. CLIENTES - CRIAR (ASSOCIADO AO USUÁRIO)
 app.post('/clientes', extractUserFromToken, async (req, res) => {
   try {
-    const { nome, email, telefone, ativo = false } = req.body;
+    const { nome, email, telefone, ativo = false, avatar, favorito = false, avaliacao = 0 } = req.body;
     const userId = req.userId;
-    console.log('Criando cliente:', { nome, email, telefone, userId });
+    console.log('Criando cliente:', { nome, email, telefone, avatar, favorito, avaliacao, userId });
 
     if (!nome || !email) {
       return respond(res, { error: 'Nome e email são obrigatórios' }, 400);
@@ -312,8 +351,8 @@ app.post('/clientes', extractUserFromToken, async (req, res) => {
     }
 
     const result = await database.db.run(
-      'INSERT INTO clientes (nome, email, telefone, ativo, user_id) VALUES (?, ?, ?, ?, ?)',
-      [nome, email, telefone || null, ativo ? 1 : 0, userId]
+      'INSERT INTO clientes (nome, email, telefone, ativo, user_id, avatar, favorito, avaliacao) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [nome, email, telefone || null, ativo ? 1 : 0, userId, avatar || null, favorito ? 1 : 0, avaliacao]
     );
 
     const cliente = await database.db.get(
@@ -334,7 +373,7 @@ app.post('/clientes', extractUserFromToken, async (req, res) => {
 app.put('/clientes/:codigo', extractUserFromToken, async (req, res) => {
   try {
     const { codigo } = req.params;
-    const { nome, email, telefone, ativo } = req.body;
+    const { nome, email, telefone, ativo, avatar, favorito, avaliacao } = req.body;
     const userId = req.userId;
     console.log('Atualizando cliente:', codigo, 'para usuário:', userId);
 
@@ -348,8 +387,8 @@ app.put('/clientes/:codigo', extractUserFromToken, async (req, res) => {
     }
 
     await database.db.run(
-      'UPDATE clientes SET nome = ?, email = ?, telefone = ?, ativo = ?, updatedAt = CURRENT_TIMESTAMP WHERE codigo = ? AND user_id = ?',
-      [nome, email, telefone || null, ativo ? 1 : 0, codigo, userId]
+      'UPDATE clientes SET nome = ?, email = ?, telefone = ?, ativo = ?, avatar = ?, favorito = ?, avaliacao = ?, updatedAt = CURRENT_TIMESTAMP WHERE codigo = ? AND user_id = ?',
+      [nome, email, telefone || null, ativo ? 1 : 0, avatar || null, favorito ? 1 : 0, avaliacao || 0, codigo, userId]
     );
 
     const clienteAtualizado = await database.db.get(
