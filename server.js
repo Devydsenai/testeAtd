@@ -28,6 +28,7 @@ async function initializeDatabase() {
       driver: sqlite3.Database
     });
 
+
     // Criar tabelas se não existirem
     await db.exec(`
       CREATE TABLE IF NOT EXISTS clientes (
@@ -43,12 +44,17 @@ async function initializeDatabase() {
     `);
 
     // Adicionar coluna 'deleted' se não existir (para bancos existentes)
-    try {
-      await db.exec(`ALTER TABLE clientes ADD COLUMN deleted BOOLEAN DEFAULT 0;`);
-      console.log('Coluna "deleted" adicionada à tabela clientes');
-    } catch (error) {
-      // Coluna já existe ou erro de sintaxe, ignorar
-      console.log('Coluna "deleted" já existe ou erro ao adicionar:', error.message);
+    const columns = await db.all(`PRAGMA table_info(clientes);`);
+    const hasDeleted = columns.some(col => col.name === 'deleted');
+    if (!hasDeleted) {
+      try {
+        await db.exec(`ALTER TABLE clientes ADD COLUMN deleted BOOLEAN DEFAULT 0;`);
+        console.log('Coluna "deleted" adicionada à tabela clientes');
+      } catch (error) {
+        console.log('Erro ao adicionar coluna "deleted":', error.message);
+      }
+    } else {
+      console.log('Coluna "deleted" já existe na tabela clientes');
     }
 
     await db.exec(`
