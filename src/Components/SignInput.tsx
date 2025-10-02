@@ -11,8 +11,8 @@ const InputArea = styled.View<{ focused?: boolean }>`
     padding-left: 15px;
     align-items: center;
     margin-bottom: 15px;
-    border-width: ${props => props.focused ? '2' : '0'}px;
-    border-color: ${props => props.focused ? colors.blue : 'transparent'};
+    border-width: 0px;
+    border-color: transparent;
     box-shadow: ${props => props.focused ? '0px 2px 4px rgba(99, 194, 209, 0.2)' : 'none'};
     elevation: ${props => props.focused ? 2 : 0};
 `;
@@ -56,13 +56,21 @@ export default function SignInput({
                 <IconSvg width={24} height={24} fill={focused ? colors.blue : colors.grayDark} />
             </IconWrapper>
             <Input
-                placeholder={placeholder}
+                placeholder={value && value.length > 0 ? '' : placeholder}
                 placeholderTextColor={colors.grayMedium}
                 value={value}
                 onChangeText={onChangeText}
                 secureTextEntry={password}
                 onFocus={() => setFocused(true)}
                 onBlur={() => setFocused(false)}
+                underlineColorAndroid="transparent"
+                selectionColor={colors.blue}
+                autoCorrect={false}
+                autoCapitalize="none"
+                autoComplete="off"
+                autoCompleteType="off"
+                textContentType="none"
+                importantForAutofill="no"
             />
             
         </InputArea>

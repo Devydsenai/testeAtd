@@ -34,18 +34,22 @@ async function initializeDatabase() {
       CREATE TABLE IF NOT EXISTS clientes (
         codigo INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
+        email TEXT NOT NULL,
         telefone TEXT,
         ativo BOOLEAN DEFAULT 1,
         deleted BOOLEAN DEFAULT 0,
+        user_id INTEGER NOT NULL,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id)
       );
     `);
 
-    // Adicionar coluna 'deleted' se não existir (para bancos existentes)
+    // Adicionar colunas se não existirem (para bancos existentes)
     const columns = await db.all(`PRAGMA table_info(clientes);`);
     const hasDeleted = columns.some(col => col.name === 'deleted');
+    const hasUserId = columns.some(col => col.name === 'user_id');
+    
     if (!hasDeleted) {
       try {
         await db.exec(`ALTER TABLE clientes ADD COLUMN deleted BOOLEAN DEFAULT 0;`);
@@ -55,6 +59,17 @@ async function initializeDatabase() {
       }
     } else {
       console.log('Coluna "deleted" já existe na tabela clientes');
+    }
+    
+    if (!hasUserId) {
+      try {
+        await db.exec(`ALTER TABLE clientes ADD COLUMN user_id INTEGER DEFAULT 1;`);
+        console.log('Coluna "user_id" adicionada à tabela clientes');
+      } catch (error) {
+        console.log('Erro ao adicionar coluna "user_id":', error.message);
+      }
+    } else {
+      console.log('Coluna "user_id" já existe na tabela clientes');
     }
 
     await db.exec(`
@@ -82,6 +97,42 @@ initializeDatabase();
 // Helper para responder com JSON
 const respond = (res, data, status = 200) => {
   return res.status(status).json(data);
+};
+
+// Middleware para extrair usuário do token (simplificado para este exemplo)
+const extractUserFromToken = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Token de autorização necessário' });
+    }
+    
+    const token = authHeader.substring(7);
+    
+    // Para este exemplo, vamos usar um sistema simples baseado no email
+    // Em produção, você deveria usar JWT real
+    const userEmail = req.headers['x-user-email'];
+    if (!userEmail) {
+      return res.status(401).json({ error: 'Email do usuário necessário' });
+    }
+    
+    // Buscar usuário pelo email
+    database.db.get('SELECT id FROM users WHERE email = ?', [userEmail])
+      .then(user => {
+        if (!user) {
+          return res.status(401).json({ error: 'Usuário não encontrado' });
+        }
+        req.userId = user.id;
+        next();
+      })
+      .catch(error => {
+        console.error('Erro ao buscar usuário:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
+      });
+  } catch (error) {
+    console.error('Erro no middleware de autenticação:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
 };
 
 // ROTAS DA API
@@ -180,14 +231,15 @@ app.post('/auth/register', async (req, res) => {
   }
 });
 
-// 4. CLIENTES - LISTAR TODOS
-app.get('/clientes', async (req, res) => {
+// 4. CLIENTES - LISTAR TODOS (FILTRADO POR USUÁRIO)
+app.get('/clientes', extractUserFromToken, async (req, res) => {
   try {
-    console.log('Listando clientes');
+    const userId = req.userId;
+    console.log('Listando clientes para usuário:', userId);
     const { nome, email, ativo, limit = 100, offset = 0 } = req.query;
 
-    let query = 'SELECT * FROM clientes WHERE 1=1';
-    const params = [];
+    let query = 'SELECT * FROM clientes WHERE deleted = 0 AND user_id = ?';
+    const params = [userId];
 
     if (nome) {
       query += ' AND nome LIKE ?';
@@ -205,7 +257,7 @@ app.get('/clientes', async (req, res) => {
     query += ` ORDER BY codigo ASC LIMIT ${limit} OFFSET ${offset}`;
 
     const clientes = await database.db.all(query, params);
-    console.log(`Encontrados ${clientes.length} clientes`);
+    console.log(`Encontrados ${clientes.length} clientes para usuário ${userId}`);
     respond(res, clientes);
 
   } catch (error) {
@@ -214,15 +266,16 @@ app.get('/clientes', async (req, res) => {
   }
 });
 
-// 5. CLIENTES - BUSCAR POR CÓDIGO
-app.get('/clientes/:codigo', async (req, res) => {
+// 5. CLIENTES - BUSCAR POR CÓDIGO (FILTRADO POR USUÁRIO)
+app.get('/clientes/:codigo', extractUserFromToken, async (req, res) => {
   try {
     const { codigo } = req.params;
-    console.log('Buscando cliente:', codigo);
+    const userId = req.userId;
+    console.log('Buscando cliente:', codigo, 'para usuário:', userId);
 
     const cliente = await database.db.get(
-      'SELECT * FROM clientes WHERE codigo = ?',
-      [codigo]
+      'SELECT * FROM clientes WHERE codigo = ? AND user_id = ?',
+      [codigo, userId]
     );
 
     if (!cliente) {
@@ -237,20 +290,21 @@ app.get('/clientes/:codigo', async (req, res) => {
   }
 });
 
-// 6. CLIENTES - CRIAR
-app.post('/clientes', async (req, res) => {
+// 6. CLIENTES - CRIAR (ASSOCIADO AO USUÁRIO)
+app.post('/clientes', extractUserFromToken, async (req, res) => {
   try {
     const { nome, email, telefone, ativo = false } = req.body;
-    console.log('Criando cliente:', { nome, email, telefone });
+    const userId = req.userId;
+    console.log('Criando cliente:', { nome, email, telefone, userId });
 
     if (!nome || !email) {
       return respond(res, { error: 'Nome e email são obrigatórios' }, 400);
     }
 
-    // Verificar se email já existe
+    // Verificar se email já existe para este usuário
     const existing = await database.db.get(
-      'SELECT codigo FROM clientes WHERE email = ?',
-      [email]
+      'SELECT codigo FROM clientes WHERE email = ? AND user_id = ?',
+      [email, userId]
     );
 
     if (existing) {
@@ -258,8 +312,8 @@ app.post('/clientes', async (req, res) => {
     }
 
     const result = await database.db.run(
-      'INSERT INTO clientes (nome, email, telefone, ativo) VALUES (?, ?, ?, ?)',
-      [nome, email, telefone || null, ativo ? 1 : 0]
+      'INSERT INTO clientes (nome, email, telefone, ativo, user_id) VALUES (?, ?, ?, ?, ?)',
+      [nome, email, telefone || null, ativo ? 1 : 0, userId]
     );
 
     const cliente = await database.db.get(
@@ -267,7 +321,7 @@ app.post('/clientes', async (req, res) => {
       [result.lastID]
     );
 
-    console.log('Cliente criado:', cliente.codigo);
+    console.log('Cliente criado:', cliente.codigo, 'para usuário:', userId);
     respond(res, cliente, 201);
 
   } catch (error) {
@@ -276,16 +330,17 @@ app.post('/clientes', async (req, res) => {
   }
 });
 
-// 7. CLIENTES - ATUALIZAR
-app.put('/clientes/:codigo', async (req, res) => {
+// 7. CLIENTES - ATUALIZAR (FILTRADO POR USUÁRIO)
+app.put('/clientes/:codigo', extractUserFromToken, async (req, res) => {
   try {
     const { codigo } = req.params;
     const { nome, email, telefone, ativo } = req.body;
-    console.log('Atualizando cliente:', codigo);
+    const userId = req.userId;
+    console.log('Atualizando cliente:', codigo, 'para usuário:', userId);
 
     const cliente = await database.db.get(
-      'SELECT codigo FROM clientes WHERE codigo = ?',
-      [codigo]
+      'SELECT codigo FROM clientes WHERE codigo = ? AND user_id = ?',
+      [codigo, userId]
     );
 
     if (!cliente) {
@@ -293,8 +348,8 @@ app.put('/clientes/:codigo', async (req, res) => {
     }
 
     await database.db.run(
-      'UPDATE clientes SET nome = ?, email = ?, telefone = ?, ativo = ?, updatedAt = CURRENT_TIMESTAMP WHERE codigo = ?',
-      [nome, email, telefone || null, ativo ? 1 : 0, codigo]
+      'UPDATE clientes SET nome = ?, email = ?, telefone = ?, ativo = ?, updatedAt = CURRENT_TIMESTAMP WHERE codigo = ? AND user_id = ?',
+      [nome, email, telefone || null, ativo ? 1 : 0, codigo, userId]
     );
 
     const clienteAtualizado = await database.db.get(
@@ -302,7 +357,7 @@ app.put('/clientes/:codigo', async (req, res) => {
       [codigo]
     );
 
-    console.log('Cliente atualizado:', codigo);
+    console.log('Cliente atualizado:', codigo, 'para usuário:', userId);
     respond(res, clienteAtualizado);
 
   } catch (error) {
@@ -311,15 +366,16 @@ app.put('/clientes/:codigo', async (req, res) => {
   }
 });
 
-// 8. CLIENTES - ATUALIZAR PARCIAL
-app.patch('/clientes/:codigo', async (req, res) => {
+// 8. CLIENTES - ATUALIZAR PARCIAL (FILTRADO POR USUÁRIO)
+app.patch('/clientes/:codigo', extractUserFromToken, async (req, res) => {
   try {
     const { codigo } = req.params;
-    console.log('Patch cliente:', codigo, req.body);
+    const userId = req.userId;
+    console.log('Patch cliente:', codigo, req.body, 'para usuário:', userId);
 
     const cliente = await database.db.get(
-      'SELECT codigo FROM clientes WHERE codigo = ?',
-      [codigo]
+      'SELECT codigo FROM clientes WHERE codigo = ? AND user_id = ?',
+      [codigo, userId]
     );
 
     if (!cliente) {
@@ -341,8 +397,8 @@ app.patch('/clientes/:codigo', async (req, res) => {
       values.push(req.body[field]);
     });
 
-    query += setClauses.join(', ') + ', updatedAt = CURRENT_TIMESTAMP WHERE codigo = ?';
-    values.push(codigo);
+    query += setClauses.join(', ') + ', updatedAt = CURRENT_TIMESTAMP WHERE codigo = ? AND user_id = ?';
+    values.push(codigo, userId);
 
     await database.db.run(query, values);
 
@@ -351,7 +407,7 @@ app.patch('/clientes/:codigo', async (req, res) => {
       [codigo]
     );
 
-    console.log('Cliente patch atualizado:', codigo);
+    console.log('Cliente patch atualizado:', codigo, 'para usuário:', userId);
     respond(res, clienteAtualizado);
 
   } catch (error) {
@@ -360,24 +416,25 @@ app.patch('/clientes/:codigo', async (req, res) => {
   }
 });
 
-// 9. CLIENTES - DELETAR
-app.delete('/clientes/:codigo', async (req, res) => {
+// 9. CLIENTES - DELETAR (FILTRADO POR USUÁRIO)
+app.delete('/clientes/:codigo', extractUserFromToken, async (req, res) => {
   try {
     const { codigo } = req.params;
-    console.log('Deletando cliente:', codigo);
+    const userId = req.userId;
+    console.log('Deletando cliente:', codigo, 'para usuário:', userId);
 
     const cliente = await database.db.get(
-      'SELECT codigo FROM clientes WHERE codigo = ?',
-      [codigo]
+      'SELECT codigo FROM clientes WHERE codigo = ? AND user_id = ?',
+      [codigo, userId]
     );
 
     if (!cliente) {
       return respond(res, { error: 'Cliente não encontrado' }, 404);
     }
 
-    await database.db.run('DELETE FROM clientes WHERE codigo = ?', [codigo]);
+    await database.db.run('DELETE FROM clientes WHERE codigo = ? AND user_id = ?', [codigo, userId]);
 
-    console.log('Cliente deletado:', codigo);
+    console.log('Cliente deletado:', codigo, 'para usuário:', userId);
     respond(res, { message: 'Cliente removido' });
 
   } catch (error) {

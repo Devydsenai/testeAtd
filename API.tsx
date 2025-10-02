@@ -341,6 +341,12 @@ Para resolver este problema:
       if (filters?.email) params.append('email', filters.email);
       if (filters?.ativo !== undefined) params.append('ativo', filters.ativo.toString());
 
+      // Adicionar email do usuário no header
+      const userEmail = this.getCurrentUserEmail();
+      if (userEmail) {
+        this.axiosInstance.defaults.headers.common['x-user-email'] = userEmail;
+      }
+
       const response: AxiosResponse<Cliente[]> = await this.axiosInstance.get(`/clientes?${params.toString()}`);
       return response.data;
     } catch (error) {
@@ -355,6 +361,12 @@ Para resolver este problema:
    */
   async getCliente(codigo: number): Promise<Cliente> {
     try {
+      // Adicionar email do usuário no header
+      const userEmail = this.getCurrentUserEmail();
+      if (userEmail) {
+        this.axiosInstance.defaults.headers.common['x-user-email'] = userEmail;
+      }
+
       const response: AxiosResponse<Cliente> = await this.axiosInstance.get(`/clientes/${codigo}`);
       return response.data;
     } catch (error) {
@@ -372,6 +384,12 @@ Para resolver este problema:
    */
   async criarCliente(dados: ClienteForm): Promise<Cliente> {
     try {
+      // Adicionar email do usuário no header
+      const userEmail = this.getCurrentUserEmail();
+      if (userEmail) {
+        this.axiosInstance.defaults.headers.common['x-user-email'] = userEmail;
+      }
+
       const response: AxiosResponse<Cliente> = await this.axiosInstance.post('/clientes', dados);
       return response.data;
     } catch (error) {
@@ -394,6 +412,12 @@ Para resolver este problema:
    */
   async atualizarCliente(codigo: number, dados: ClienteForm): Promise<Cliente> {
     try {
+      // Adicionar email do usuário no header
+      const userEmail = this.getCurrentUserEmail();
+      if (userEmail) {
+        this.axiosInstance.defaults.headers.common['x-user-email'] = userEmail;
+      }
+
       const response: AxiosResponse<Cliente> = await this.axiosInstance.put(`/clientes/${codigo}`, dados);
       return response.data;
     } catch (error) {
@@ -419,6 +443,12 @@ Para resolver este problema:
    */
   async atualizarClienteParcial(codigo: number, dados: Partial<ClienteForm>): Promise<Cliente> {
     try {
+      // Adicionar email do usuário no header
+      const userEmail = this.getCurrentUserEmail();
+      if (userEmail) {
+        this.axiosInstance.defaults.headers.common['x-user-email'] = userEmail;
+      }
+
       const response: AxiosResponse<Cliente> = await this.axiosInstance.patch(`/clientes/${codigo}`, dados);
       return response.data;
     } catch (error) {
@@ -444,6 +474,12 @@ Para resolver este problema:
       console.log('API: Iniciando DELETE request...');
       console.log('API: URL:', `/clientes/${codigo}`);
       console.log('API: Base URL completa:', this.baseURL);
+      
+      // Adicionar email do usuário no header
+      const userEmail = this.getCurrentUserEmail();
+      if (userEmail) {
+        this.axiosInstance.defaults.headers.common['x-user-email'] = userEmail;
+      }
       
       const response: AxiosResponse<{ message: string }> = await this.axiosInstance.delete(`/clientes/${codigo}`);
       
@@ -580,9 +616,11 @@ Para resolver este problema:
     
     // 1. Remover dos headers do axios
     delete this.axiosInstance.defaults.headers.common['Authorization'];
+    delete this.axiosInstance.defaults.headers.common['x-user-email'];
     
     // 2. Limpar localStorage
     this.clearToken();
+    this.clearUserEmail();
     
     // 3. Forçar limpeza adicional de qualquer cache
     try {
@@ -591,10 +629,12 @@ Para resolver este problema:
         window.localStorage.removeItem('auth_token');
         window.localStorage.removeItem('token');
         window.localStorage.removeItem('user_token');
+        window.localStorage.removeItem('user_email');
         
         // Verificar se realmente foi limpo
         const verifyClean = window.localStorage.getItem('auth_token');
-        console.log('localStorage completamente limpo:', verifyClean === null);
+        const verifyEmailClean = window.localStorage.getItem('user_email');
+        console.log('localStorage completamente limpo:', verifyClean === null && verifyEmailClean === null);
       }
     } catch (error) {
       console.log('Erro ao limpar localStorage:', error);
@@ -602,8 +642,53 @@ Para resolver este problema:
     
     // 4. Verificar se foi removido dos headers
     const newAuth = this.axiosInstance.defaults.headers.common['Authorization'];
+    const newEmail = this.axiosInstance.defaults.headers.common['x-user-email'];
     console.log('Auth token removido dos headers:', newAuth === undefined);
-    console.log('Logout completo - token removido de todos os locais');
+    console.log('User email removido dos headers:', newEmail === undefined);
+    console.log('Logout completo - token e email removidos de todos os locais');
+  }
+
+  /**
+   * Obter email do usuário atual do localStorage
+   */
+  private getCurrentUserEmail(): string | null {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('user_email');
+      }
+      return null;
+    } catch (error) {
+      console.log('Erro ao obter email do usuário:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Salvar email do usuário no localStorage
+   */
+  private saveUserEmail(email: string): void {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('user_email', email);
+        console.log('Email do usuário salvo:', email);
+      }
+    } catch (error) {
+      console.log('Erro ao salvar email do usuário:', error);
+    }
+  }
+
+  /**
+   * Remover email do usuário do localStorage
+   */
+  private clearUserEmail(): void {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem('user_email');
+        console.log('Email do usuário removido');
+      }
+    } catch (error) {
+      console.log('Erro ao remover email do usuário:', error);
+    }
   }
 
   /**
@@ -676,6 +761,9 @@ Para resolver este problema:
         password: credentials.password
       });
       
+      // Salvar email do usuário para usar nas requisições
+      this.saveUserEmail(credentials.email);
+      
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -702,6 +790,9 @@ Para resolver este problema:
         phone: data.phone || '',
         password: data.password
       });
+      
+      // Salvar email do usuário para usar nas requisições
+      this.saveUserEmail(data.email);
       
       return response.data;
     } catch (error) {

@@ -467,12 +467,16 @@ export default function Home() {
                 <SearchInputContainer>
                     <SearchIcon width={20} height={20} fill={colors.grayMedium} />
                     <SearchInput
-                        placeholder="Buscar clientes por nome, email ou telefone..."
+                        placeholder={!searchTerm || searchTerm.trim() === '' ? "Buscar clientes por nome, email ou telefone..." : ''}
                         value={searchTerm}
                         onChangeText={handleSearchChange}
                         keyboardType="default"
                         autoCapitalize="none"
                         autoCorrect={false}
+                        autoComplete="off"
+                        autoCompleteType="off"
+                        textContentType="none"
+                        importantForAutofill="no"
                     />
                 </SearchInputContainer>
                 {searchTerm.trim() && (
@@ -584,25 +588,37 @@ export default function Home() {
 
                                 <ModalFormContainer>
                                     <ModalInput
-                                        placeholder="Nome completo *"
+                                        placeholder={formData.nome && formData.nome.length > 0 ? '' : "Nome completo *"}
                                         value={formData.nome}
                                         onChangeText={(text) => setFormData({ ...formData, nome: text })}
                                         autoCapitalize="words"
+                                        autoComplete="off"
+                                        autoCompleteType="off"
+                                        textContentType="none"
+                                        importantForAutofill="no"
                                     />
 
                                     <ModalInput
-                                        placeholder="Email *"
+                                        placeholder={formData.email && formData.email.length > 0 ? '' : "Email *"}
                                         value={formData.email}
                                         onChangeText={(text) => setFormData({ ...formData, email: text })}
                                         keyboardType="email-address"
                                         autoCapitalize="none"
+                                        autoComplete="off"
+                                        autoCompleteType="off"
+                                        textContentType="none"
+                                        importantForAutofill="no"
                                     />
 
                                     <ModalInput
-                                        placeholder="Telefone"
+                                        placeholder={formData.telefone && formData.telefone.length > 0 ? '' : "Telefone"}
                                         value={formData.telefone || ''}
                                         onChangeText={(text) => setFormData({ ...formData, telefone: text })}
                                         keyboardType="phone-pad"
+                                        autoComplete="off"
+                                        autoCompleteType="off"
+                                        textContentType="none"
+                                        importantForAutofill="no"
                                     />
                                 </ModalFormContainer>
 
