@@ -33,10 +33,219 @@ CREATE TABLE aluno
 ///////////////////////////////////
 
 
-CRATE TABLE livro
+///////////////////////////////////////
+
+CREATE TABLE editora
 
 (
- idisbn
+  idEditora INT NOT NULL AUTO_INCREMENT,
+  nome VARCHAR(50) NOT NULL,
+  
+  PRIMARY KEY (idEditora)
 );
+
+///////////////////////////////////////
+
+CREATE TABLE autor
+
+(
+  idAutor INT NOT NULL AUTO_INCREMENT,
+  nome VARCHAR(100) NOT NULL,
+  
+  PRIMARY KEY (idAutor)
+);
+
+///////////////////////////////////////
+
+CREATE TABLE livro
+
+(
+  ISBN VARCHAR(15) NOT NULL,
+  idEditora INT NOT NULL,
+  titulo VARCHAR(150) NOT NULL,
+  ano_publicacao INT NOT NULL,
+  
+  PRIMARY KEY (ISBN),
+  FOREIGN KEY (idEditora) REFERENCES editora(idEditora)
+);
+
+///////////////////////////////////////
+
+CREATE TABLE emprestimo
+
+(
+  ISBN VARCHAR(15) NOT NULL,
+  matricula VARCHAR(15) NOT NULL,
+  data_emprestimo DATETIME NOT NULL,
+  data_devolucao DATE NOT NULL,
+  data_efetiva_devolucao DATETIME,
+  
+  PRIMARY KEY (ISBN, matricula),
+  FOREIGN KEY (ISBN) REFERENCES livro(ISBN),
+  FOREIGN KEY (matricula) REFERENCES aluno(matricula)
+);
+
+///////////////////////////////////////
+
+CREATE TABLE livro_autor
+
+(
+  ISBN VARCHAR(15) NOT NULL,
+  idAutor INT NOT NULL,
+  
+  PRIMARY KEY (ISBN, idAutor),
+  FOREIGN KEY (ISBN) REFERENCES livro(ISBN),
+  FOREIGN KEY (idAutor) REFERENCES autor(idAutor)
+);
+
+///////////////////////////////////////
+
+CREATE TABLE editora_autor
+
+(
+  idEditora INT NOT NULL,
+  idAutor INT NOT NULL,
+  
+  PRIMARY KEY (idEditora, idAutor),
+  FOREIGN KEY (idEditora) REFERENCES editora(idEditora),
+  FOREIGN KEY (idAutor) REFERENCES autor(idAutor)
+);
+
+///////////////////////////////////////
+// DADOS DE EXEMPLO PARA TESTE
+///////////////////////////////////////
+
+-- Inserir cursos
+INSERT INTO curso (nome) VALUES 
+('Ciência da Computação'),
+('Engenharia de Software'),
+('Sistemas de Informação'),
+('Análise e Desenvolvimento de Sistemas');
+
+-- Inserir editoras
+INSERT INTO editora (nome) VALUES 
+('Editora Campus'),
+('Pearson Education'),
+('O\'Reilly Media'),
+('Saraiva'),
+('Novatec');
+
+-- Inserir autores
+INSERT INTO autor (nome) VALUES 
+('Robert C. Martin'),
+('Eric Evans'),
+('Martin Fowler'),
+('Kent Beck'),
+('Grady Booch');
+
+-- Inserir alunos
+INSERT INTO aluno (matricula, idcurso, nome, cpf) VALUES 
+('2024001', 1, 'João Silva', '12345678901'),
+('2024002', 1, 'Maria Santos', '98765432109'),
+('2024003', 2, 'Pedro Oliveira', '11122233344'),
+('2024004', 3, 'Ana Costa', '55566677788');
+
+-- Inserir livros
+INSERT INTO livro (ISBN, idEditora, titulo, ano_publicacao) VALUES 
+('9780132350884', 1, 'Clean Code', 2008),
+('9780321125217', 2, 'Domain-Driven Design', 2003),
+('9780134685991', 3, 'Effective Java', 2017),
+('9780134757599', 4, 'Clean Architecture', 2017);
+
+-- Inserir relacionamentos livro-autor
+INSERT INTO livro_autor (ISBN, idAutor) VALUES 
+('9780132350884', 1), -- Clean Code - Robert C. Martin
+('9780321125217', 2), -- DDD - Eric Evans
+('9780134685991', 3), -- Effective Java - Martin Fowler
+('9780134757599', 1); -- Clean Architecture - Robert C. Martin
+
+-- Inserir relacionamentos editora-autor
+INSERT INTO editora_autor (idEditora, idAutor) VALUES 
+(1, 1), -- Campus - Robert C. Martin
+(2, 2), -- Pearson - Eric Evans
+(3, 3), -- O'Reilly - Martin Fowler
+(1, 4), -- Campus - Kent Beck
+(4, 5); -- Saraiva - Grady Booch
+
+-- Inserir empréstimos
+INSERT INTO emprestimo (ISBN, matricula, data_emprestimo, data_devolucao) VALUES 
+('9780132350884', '2024001', '2024-01-15 10:30:00', '2024-02-15'),
+('9780321125217', '2024002', '2024-01-20 14:15:00', '2024-02-20'),
+('9780134685991', '2024003', '2024-01-25 09:45:00', '2024-02-25');
+
+///////////////////////////////////////
+// CONSULTAS SQL ÚTEIS
+///////////////////////////////////////
+
+-- 1. Listar todos os livros com seus autores
+SELECT 
+    l.ISBN,
+    l.titulo,
+    l.ano_publicacao,
+    e.nome as editora,
+    GROUP_CONCAT(a.nome SEPARATOR ', ') as autores
+FROM livro l
+JOIN editora e ON l.idEditora = e.idEditora
+LEFT JOIN livro_autor la ON l.ISBN = la.ISBN
+LEFT JOIN autor a ON la.idAutor = a.idAutor
+GROUP BY l.ISBN, l.titulo, l.ano_publicacao, e.nome;
+
+-- 2. Listar empréstimos ativos (não devolvidos)
+SELECT 
+    a.nome as aluno,
+    a.matricula,
+    l.titulo as livro,
+    emp.data_emprestimo,
+    emp.data_devolucao,
+    DATEDIFF(CURDATE(), emp.data_devolucao) as dias_atraso
+FROM emprestimo emp
+JOIN aluno a ON emp.matricula = a.matricula
+JOIN livro l ON emp.ISBN = l.ISBN
+WHERE emp.data_efetiva_devolucao IS NULL;
+
+-- 3. Livros mais emprestados
+SELECT 
+    l.titulo,
+    COUNT(*) as total_emprestimos
+FROM emprestimo emp
+JOIN livro l ON emp.ISBN = l.ISBN
+GROUP BY l.ISBN, l.titulo
+ORDER BY total_emprestimos DESC;
+
+-- 4. Alunos com mais empréstimos
+SELECT 
+    a.nome,
+    a.matricula,
+    c.nome as curso,
+    COUNT(*) as total_emprestimos
+FROM emprestimo emp
+JOIN aluno a ON emp.matricula = a.matricula
+JOIN curso c ON a.idcurso = c.idcurso
+GROUP BY a.matricula, a.nome, c.nome
+ORDER BY total_emprestimos DESC;
+
+-- 5. Livros disponíveis (não emprestados)
+SELECT 
+    l.ISBN,
+    l.titulo,
+    e.nome as editora,
+    l.ano_publicacao
+FROM livro l
+JOIN editora e ON l.idEditora = e.idEditora
+WHERE l.ISBN NOT IN (
+    SELECT ISBN 
+    FROM emprestimo 
+    WHERE data_efetiva_devolucao IS NULL
+);
+
+-- 6. Relatório de empréstimos por curso
+SELECT 
+    c.nome as curso,
+    COUNT(emp.ISBN) as total_emprestimos
+FROM curso c
+LEFT JOIN aluno a ON c.idcurso = a.idcurso
+LEFT JOIN emprestimo emp ON a.matricula = emp.matricula
+GROUP BY c.idcurso, c.nome
+ORDER BY total_emprestimos DESC;
 
 
