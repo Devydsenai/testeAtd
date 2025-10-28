@@ -249,3 +249,71 @@ GROUP BY c.idcurso, c.nome
 ORDER BY total_emprestimos DESC;
 
 
+///////////////////////////////////////
+
+Atividade 04 baco de DADO
+
+SELECT * FROM 
+DESC 
+UPDATE
+///////////////////////////
+// Criado o Baco de dado //
+///////////////////////////
+
+CREATE DATABASE atividade4;
+
+use atividade4
+
+CREATE TABLE clientes;
+(
+  id_cliente INT PRIMARY KEY,
+  nome VARCHAR(100),
+  email VARCHAR(100),
+  cidade VARCHAR(50)
+);
+
+CREATE TABLE Pedidos (
+  id_pedido INT PRIMARY KEY,
+  id_cliente INT,
+  data_pedido DATE,
+  valor_total DECIMAL(10,2),
+  FOREIGN KEY (id_cliente) REFERENCES Clientes(id_cliente)
+);
+
+INSERT INTO clientes (id_cliente, nome, email, cidade) VALUES
+(1,'joaõ','joaõ@email.com', 'camaragibe'),
+(2,'maria','maria@email.com', 'jaboatao'),
+(3,'julia','julia@email.com', 'olinda'),
+(4,'marcos','marcos@email.com', 'itamaraca'),
+(5,'tata','tata@email.com', 'sao lourenco');
+
+/////////////////////////////////////////////
+INSERT INTO Pedidos (id_pedido, id_cliente, data_pedido, valor_total) VALUES
+(101,'1','2025-02-14', '299.00'),
+(102,'2','2025-04-20', '560.00'),
+(103,'3','2025-05-27', '89.00'),
+(104,'1','2025-07-31', '150.00'),
+(105,'4','2025-08-09', '899.00'),
+(106,'5','2025-10-15', '950.00');
+
+///////////////////////////////////
+
+alter TABLE clientes 
+add telefone VARCHAR(20);
+
+//////////////////////////////
+
+UPDATE clientes SET telefone = '(81) 9 9999-9999' WHERE id_cliente = 1;
+UPDATE clientes SET telefone = '(81) 9 8888-8888' WHERE id_cliente = 2;
+UPDATE clientes SET telefone = '(81) 9 7777-7777' WHERE id_cliente = 3;
+UPDATE clientes SET telefone = '(81) 9 6666-6666' WHERE id_cliente = 4;
+UPDATE clientes SET telefone = '(81) 9 5555-5555' WHERE id_cliente = 5;
+///////////////////////////////////////////////
+
+SELECT * FROM clientes;
+SELECT * FROM Pedidos;
+
+
+
+
+
