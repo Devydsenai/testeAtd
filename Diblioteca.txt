@@ -298,7 +298,7 @@ INSERT INTO Pedidos (id_pedido, id_cliente, data_pedido, valor_total) VALUES
 
 ///////////////////////////////////
 
-alter TABLE clientes 
+ALTER TABLE clientes 
 add telefone VARCHAR(20);
 
 //////////////////////////////
