@@ -313,7 +313,117 @@ UPDATE clientes SET telefone = '(81) 9 5555-5555' WHERE id_cliente = 5;
 SELECT * FROM clientes;
 SELECT * FROM Pedidos;
 
+///////////////////////////////
+atividade5
+//////////////////////////////
+1)
+#Liste todas as vendas da Loja Centro, 
+#mostrando as colunas id_venda, vendedor, 
+#produto, quantidade e valor_total, 
+#ordenadas pelo valor_total em ordem decrescente.
 
+select id_venda, vendedor, produto, quantidade, valor_total 
+from vendas
+where loja= 'Loja Centro' order by valor_total desc
+2)
+#Exiba as vendas cujo valor_total seja maior que 2000, 
+#mostrando data_venda, vendedor, produto e valor_total, 
+#ordenadas pela data mais recente.
+
+select valor_total, data_venda, vendedor, produto
+from vendas
+
+where valor_total < 2000
+order by data_venda asc
+
+3)
+#Mostre todas as vendas feitas por Pix, 
+#exibindo id_venda, vendedor, forma_pagamento, 
+#valor_total e regiao, ordenadas por vendedor..
+
+select id_venda, vendedor, forma_pagamento, valor_total, regiao
+from vendas
+
+where forma_pagamento= 'Pix'
+order by vendedor
+
+4)
+#Liste as vendas da categoria “Eletrônicos” 
+#com quantidade maior que 1, mostrando produto, quantidade e 
+#valor_total, ordenadas pelo produto.
+
+select produto, valor_total
+from vendas
+
+where quantidade> 1 and categoria='Eletrônicos'
+order by produto
+
+5)
+#Selecione as vendas realizadas entre 1º de 
+#março e 30 de junho de 2025, mostrando data_venda, vendedor, 
+#loja, valor_total, em ordem crescente de data.
+
+select data_venda, vendedor,loja, valor_total
+from vendas
+
+where data_venda between '2025-03-01' and '2025-06-30'
+order by data_venda asc
+
+6)
+#Exiba todas as vendas da região PE com 
+#forma de pagamento “Crédito”, mostrando vendedor, produto, quantidade, 
+#valor_total e ordenando por valor_total decrescente.
+
+select vendedor,loja, valor_total
+from vendas
+
+where regiao='Pe' and forma_pagamento='Crédito'
+order by valor_total desc
+
+7)
+#Liste as vendas com quantidade entre 2 e 4 unidades, 
+#mostrando id_venda, produto, quantidade, valor_unitario e valor_total, 
+#ordenadas por quantidade e depois por produto.
+
+select id_venda, produto, quantidade, valor_unitario,valor_total
+from vendas
+
+where quantidade between 2 and 4
+order by quantidade and produto
+
+8)
+#Mostre as vendas da categoria “Calçados” ou 
+#“Vestuário”, exibindo produto, categoria, quantidade e valor_total, 
+#ordenadas pelo valor_total crescente.
+
+select produto, categoria, quantidade,valor_total
+from vendas
+
+where categoria in('Calçados' , 'Vestuário')
+order by  valor_total asc
+
+9)
+#Exiba apenas as vendas feitas pelos 
+#vendedores “Ana Lima” e “Carlos Souza”, 
+#mostrando data_venda, vendedor, produto, valor_total, 
+#ordenadas por data e valor_total.
+
+select data_venda, vendedor, produto, valor_total
+from vendas
+
+where vendedor in('Ana Lima' , 'Carlos Souza')
+order by data_venda, valor_total;
+
+10)
+select 
+ produto, quantidade, valor_unitario, forma_pagamento
+from 
+ vendas
+ where
+  valor_unitario <200 and 
+  forma_pagamento ='Dinheiro' 
+order by 
+produto
 
 
 
