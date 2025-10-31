@@ -415,15 +415,10 @@ where vendedor in('Ana Lima' , 'Carlos Souza')
 order by data_venda, valor_total;
 
 10)
-select 
- produto, quantidade, valor_unitario, forma_pagamento
-from 
- vendas
- where
-  valor_unitario <200 and 
-  forma_pagamento ='Dinheiro' 
-order by 
-produto
+select produto, quantidade, valor_unitario, forma_pagamento
+from vendas
+where valor_unitario <200 and forma_pagamento ='Dinheiro' 
+order by produto
 
 
 
