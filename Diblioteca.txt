@@ -420,45 +420,75 @@ from vendas
 where valor_unitario <200 and forma_pagamento ='Dinheiro' 
 order by produto
 
+////////////////////////////
+DROP TABLE nome_da_tabela; /
+///////////////////////////
+
 /////////////////////////
- Aluno_curso_professor //
+-- NORMALIZAÇÃO EXERCÍCIO 1 //
+-- Aluno_curso_professor     //
 /////////////////////////
 
-DROP TABLE nome_da_tabela;
+-- ============================================
+-- CRIAR BANCO DE DADOS
+-- ============================================
+CREATE DATABASE IF NOT EXISTS NormalizacaoEx1;
+USE NormalizacaoEx1;
+
+-- ============================================
+-- TABELA NÃO NORMALIZADA (ORIGINAL)
+-- ============================================
+-- Esta é a tabela original que precisa ser normalizada:
+/*
+CREATE TABLE aluno_curso_professor (
+    AlunoID INT PRIMARY KEY,
+    NomeAluno VARCHAR(100),
+    Curso VARCHAR(100),
+    Turno VARCHAR(20),
+    Professor VARCHAR(100),
+    TelefoneProfessor VARCHAR(20)
+);
+*/
+
+-- ============================================
+-- NORMALIZAÇÃO: Separando a tabela não normalizada
+-- em tabelas relacionadas (3FN - Terceira Forma Normal)
+-- ============================================
 
 CREATE TABLE Aluno (
-    AlunoID INT PRIMARY KEY,
-    NomeAluno VARCHAR(100)
+    AlunoID INT NOT NULL PRIMARY KEY,
+    NomeAluno VARCHAR(100) NOT NULL
 );
 
-
 CREATE TABLE Curso (
-    CursoID INT PRIMARY KEY AUTO_INCREMENT,
-    NomeCurso VARCHAR(100),
-    Turno VARCHAR(20)
+    CursoID INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    NomeCurso VARCHAR(100) NOT NULL,
+    Turno VARCHAR(20) NOT NULL
 );
 
 CREATE TABLE Professor (
-    ProfessorID INT PRIMARY KEY AUTO_INCREMENT,
-    NomeProfessor VARCHAR(100),
-    TelefoneProfessor VARCHAR(20)
+    ProfessorID INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    NomeProfessor VARCHAR(100) NOT NULL,
+    TelefoneProfessor VARCHAR(20) NOT NULL
 );
 
+-- Tabela de relacionamento: Aluno pode estar em múltiplos cursos
+-- com múltiplos professores (relacionamento N:N:N)
 CREATE TABLE AlunoCursoProfessor (
-    AlunoID INT,
-    CursoID INT,
-    ProfessorID INT,
-    PRIMARY KEY (AlunoID),
-    FOREIGN KEY (AlunoID) REFERENCES Aluno(AlunoID),
-    FOREIGN KEY (CursoID) REFERENCES Curso(CursoID),
-    FOREIGN KEY (ProfessorID) REFERENCES Professor(ProfessorID)
+    AlunoID INT NOT NULL,
+    CursoID INT NOT NULL,
+    ProfessorID INT NOT NULL,
+    PRIMARY KEY (AlunoID, CursoID, ProfessorID),
+    FOREIGN KEY (AlunoID) REFERENCES Aluno(AlunoID) ON DELETE CASCADE,
+    FOREIGN KEY (CursoID) REFERENCES Curso(CursoID) ON DELETE CASCADE,
+    FOREIGN KEY (ProfessorID) REFERENCES Professor(ProfessorID) ON DELETE CASCADE
 );
 
-/////////////////////////
-    Tabela             //
-/////////////////////////
+-- ============================================
+-- INSERIR DADOS DE EXEMPLO
+-- ============================================
 
-Tabela Aluno
+-- Inserir Alunos
 INSERT INTO Aluno (AlunoID, NomeAluno) VALUES
 (1, 'Maria Silva'),
 (2, 'José Lima'),
@@ -481,7 +511,7 @@ INSERT INTO Aluno (AlunoID, NomeAluno) VALUES
 (19, 'Camila Duarte'),
 (20, 'Vinícius Barros');
 
-Tabela Curso
+-- Inserir Cursos
 INSERT INTO Curso (CursoID, NomeCurso, Turno) VALUES
 (1, 'Administração', 'Noite'),
 (2, 'Psicologia', 'Manhã'),
@@ -490,7 +520,7 @@ INSERT INTO Curso (CursoID, NomeCurso, Turno) VALUES
 (5, 'Sistemas de Informação', 'Manhã'),
 (6, 'Pedagogia', 'Manhã');
 
-Tabela Professor
+-- Inserir Professores
 INSERT INTO Professor (ProfessorID, NomeProfessor, TelefoneProfessor) VALUES
 (1, 'João Souza', '99999-1111'),
 (2, 'Carla Mendes', '98888-2222'),
@@ -499,7 +529,7 @@ INSERT INTO Professor (ProfessorID, NomeProfessor, TelefoneProfessor) VALUES
 (5, 'Renato Prado', '95555-5555'),
 (6, 'Simone Castro', '94444-6666');
 
-Tabela AlunoCursoProfessor
+-- Inserir Relacionamentos Aluno-Curso-Professor
 INSERT INTO AlunoCursoProfessor (AlunoID, CursoID, ProfessorID) VALUES
 (1, 1, 1),
 (2, 1, 1),
@@ -522,5 +552,100 @@ INSERT INTO AlunoCursoProfessor (AlunoID, CursoID, ProfessorID) VALUES
 (19, 2, 2),
 (20, 4, 4);
 
+-- ============================================
+-- CONSULTAS DE VERIFICAÇÃO
+-- ============================================
+
+-- Consulta para recuperar os dados no formato original (normalizado)
+SELECT 
+    a.AlunoID,
+    a.NomeAluno,
+    c.NomeCurso AS Curso,
+    c.Turno,
+    p.NomeProfessor AS Professor,
+    p.TelefoneProfessor
+FROM AlunoCursoProfessor acp
+JOIN Aluno a ON acp.AlunoID = a.AlunoID
+JOIN Curso c ON acp.CursoID = c.CursoID
+JOIN Professor p ON acp.ProfessorID = p.ProfessorID
+ORDER BY a.AlunoID;
+
+-- Verificar quantos alunos por curso
+SELECT 
+    c.NomeCurso,
+    COUNT(DISTINCT acp.AlunoID) AS Total_Alunos
+FROM AlunoCursoProfessor acp
+JOIN Curso c ON acp.CursoID = c.CursoID
+GROUP BY c.CursoID, c.NomeCurso
+ORDER BY Total_Alunos DESC;
+
+-- Verificar professores e seus cursos
+SELECT 
+    p.NomeProfessor,
+    p.TelefoneProfessor,
+    GROUP_CONCAT(DISTINCT c.NomeCurso SEPARATOR ', ') AS Cursos
+FROM AlunoCursoProfessor acp
+JOIN Professor p ON acp.ProfessorID = p.ProfessorID
+JOIN Curso c ON acp.CursoID = c.CursoID
+GROUP BY p.ProfessorID, p.NomeProfessor, p.TelefoneProfessor
+ORDER BY p.NomeProfessor;
+
+-- Verificar alunos e seus cursos/professores
+SELECT 
+    a.AlunoID,
+    a.NomeAluno,
+    GROUP_CONCAT(DISTINCT c.NomeCurso SEPARATOR ', ') AS Cursos,
+    GROUP_CONCAT(DISTINCT CONCAT(p.NomeProfessor, ' (', c.Turno, ')') SEPARATOR ' | ') AS Professores_Turno
+FROM AlunoCursoProfessor acp
+JOIN Aluno a ON acp.AlunoID = a.AlunoID
+JOIN Curso c ON acp.CursoID = c.CursoID
+JOIN Professor p ON acp.ProfessorID = p.ProfessorID
+GROUP BY a.AlunoID, a.NomeAluno
+ORDER BY a.NomeAluno;
+
+-- ============================================
+-- LISTA SIMPLES DE ALUNOS
+-- ============================================
+
+-- Listar todos os alunos
+SELECT 
+    AlunoID,
+    NomeAluno
+FROM Aluno
+ORDER BY NomeAluno;
+
+-- Listar todos os cursos
+SELECT 
+    CursoID,
+    NomeCurso,
+    Turno
+FROM Curso
+ORDER BY NomeCurso;
+
+-- Listar todos os professores
+SELECT 
+    NomeProfessor
+FROM Professor
+ORDER BY NomeProfessor;
+
+-- Lista todos os Professor e TelefoneProfessor
+SELECT 
+    ProfessorID,
+    NomeProfessor,
+    TelefoneProfessor
+FROM Professor
+ORDER BY NomeProfessor;
+
+-- Lista todos os telefone
+SELECT 
+    TelefoneProfessor
+FROM Professor
+ORDER BY TelefoneProfessor;
+
+-- Lista todos NomeCurso
+SELECT 
+    NomeCurso
+FROM Curso
+ORDER BY NomeCurso;
 
 
