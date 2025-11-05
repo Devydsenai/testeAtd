@@ -649,3 +649,286 @@ FROM Curso
 ORDER BY NomeCurso;
 
 
+-- ============================================
+-- BANCO DE DADOS: LojaExerciciosJoin
+-- ============================================
+
+CREATE DATABASE IF NOT EXISTS LojaExerciciosJoin;
+
+USE LojaExerciciosJoin;
+
+-- =============================
+-- TABELA CLIENTES
+-- =============================
+CREATE TABLE Clientes (
+    ClienteID INT PRIMARY KEY AUTO_INCREMENT,
+    Nome VARCHAR(100),
+    Cidade VARCHAR(50),
+    UF CHAR(2)
+);
+
+INSERT INTO Clientes (Nome, Cidade, UF) VALUES
+('Maria Silva', 'Recife', 'PE'),
+('João Santos', 'Olinda', 'PE'),
+('Ana Costa', 'Caruaru', 'PE'),
+('Pedro Lima', 'João Pessoa', 'PB'),
+('Juliana Alves', 'Natal', 'RN'),
+('Marcos Pereira', 'Recife', 'PE'),
+('Cláudia Souza', 'Campina Grande', 'PB'),
+('Fernando Oliveira', 'Maceió', 'AL'),
+('Patrícia Nunes', 'Aracaju', 'SE'),
+('Tiago Rocha', 'Garanhuns', 'PE'),
+('Larissa Melo', 'Paulista', 'PE'),
+('Gabriel Matos', 'Maceió', 'AL'),
+('Camila Duarte', 'Recife', 'PE'),
+('André Ribeiro', 'João Pessoa', 'PB'),
+('Sônia Torres', 'Natal', 'RN');
+
+-- =============================
+-- TABELA VENDEDORES
+-- =============================
+CREATE TABLE Vendedores (
+    VendedorID INT PRIMARY KEY AUTO_INCREMENT,
+    Nome VARCHAR(100),
+    Setor VARCHAR(50)
+);
+
+INSERT INTO Vendedores (Nome, Setor) VALUES
+('Carlos Mendes', 'Eletrônicos'),
+('Fernanda Rocha', 'Moda'),
+('Ricardo Torres', 'Casa e Decoração'),
+('Patrícia Gomes', 'Esportes'),
+('Eduardo Lima', 'Informática');
+
+-- =============================
+-- TABELA PRODUTOS
+-- =============================
+CREATE TABLE Produtos (
+    ProdutoID INT PRIMARY KEY AUTO_INCREMENT,
+    Nome VARCHAR(100),
+    Categoria VARCHAR(50),
+    Preco DECIMAL(10,2)
+);
+
+INSERT INTO Produtos (Nome, Categoria, Preco) VALUES
+('Notebook Lenovo', 'Eletrônicos', 3500.00),
+('Smartphone Samsung', 'Eletrônicos', 2500.00),
+('Camisa Polo', 'Moda', 120.00),
+('Calça Jeans', 'Moda', 180.00),
+('Cafeteira Elétrica', 'Casa e Decoração', 250.00),
+('Liquidificador', 'Casa e Decoração', 200.00),
+('Bicicleta Aro 29', 'Esportes', 1800.00),
+('Tênis Nike', 'Esportes', 450.00),
+('Mouse Logitech', 'Informática', 150.00),
+('Teclado Mecânico', 'Informática', 300.00),
+('Monitor LG 24"', 'Informática', 850.00),
+('Smartwatch Xiaomi', 'Eletrônicos', 700.00),
+('Jaqueta Jeans', 'Moda', 220.00),
+('Fone Bluetooth', 'Eletrônicos', 320.00),
+('Sofá 3 Lugares', 'Casa e Decoração', 2800.00);
+
+-- =============================
+-- TABELA PEDIDOS
+-- =============================
+CREATE TABLE Pedidos (
+    PedidoID INT PRIMARY KEY AUTO_INCREMENT,
+    ClienteID INT,
+    VendedorID INT,
+    DataPedido DATE,
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID),
+    FOREIGN KEY (VendedorID) REFERENCES Vendedores(VendedorID)
+);
+
+INSERT INTO Pedidos (ClienteID, VendedorID, DataPedido) VALUES
+(1, 1, '2025-10-10'),
+(2, 2, '2025-10-11'),
+(3, 1, '2025-10-12'),
+(4, 3, '2025-10-13'),
+(5, 2, '2025-10-14'),
+(6, 1, '2025-10-15'),
+(7, 4, '2025-10-16'),
+(8, 5, '2025-10-17'),
+(9, 3, '2025-10-18'),
+(10, 4, '2025-10-19'),
+(11, 2, '2025-10-20'),
+(12, 5, '2025-10-21'),
+(13, 1, '2025-10-22'),
+(14, 3, '2025-10-23'),
+(15, 2, '2025-10-24');
+
+-- =============================
+-- TABELA ITENSPEDIDO
+-- =============================
+CREATE TABLE ItensPedido (
+    ItemID INT PRIMARY KEY AUTO_INCREMENT,
+    PedidoID INT,
+    ProdutoID INT,
+    Quantidade INT,
+    FOREIGN KEY (PedidoID) REFERENCES Pedidos(PedidoID),
+    FOREIGN KEY (ProdutoID) REFERENCES Produtos(ProdutoID)
+);
+
+INSERT INTO ItensPedido (PedidoID, ProdutoID, Quantidade) VALUES
+(1, 1, 1),
+(1, 2, 2),
+(2, 3, 3),
+(2, 4, 1),
+(3, 5, 1),
+(3, 6, 2),
+(4, 7, 1),
+(4, 8, 1),
+(5, 9, 2),
+(5, 10, 1),
+(6, 11, 1),
+(6, 12, 2),
+(7, 13, 1),
+(8, 14, 1),
+(9, 15, 1),
+(10, 1, 1),
+(11, 2, 1),
+(12, 3, 1),
+(13, 4, 2),
+(14, 5, 1),
+(15, 6, 1);
+
+-- ============================================
+-- CONSULTAS SOLICITADAS
+-- ============================================
+
+-- 1. Listar todos os pedidos com nome do cliente e vendedor
+SELECT 
+    p.PedidoID,
+    p.DataPedido,
+    c.Nome AS NomeCliente,
+    v.Nome AS NomeVendedor
+FROM Pedidos p
+JOIN Clientes c ON p.ClienteID = c.ClienteID
+JOIN Vendedores v ON p.VendedorID = v.VendedorID
+ORDER BY p.PedidoID;
+
+-- 2. Listar os produtos vendidos em cada pedido
+SELECT 
+    p.PedidoID,
+    p.DataPedido,
+    pr.Nome AS NomeProduto,
+    pr.Categoria,
+    ip.Quantidade,
+    pr.Preco AS PrecoUnitario,
+    (ip.Quantidade * pr.Preco) AS ValorTotalItem
+FROM ItensPedido ip
+JOIN Pedidos p ON ip.PedidoID = p.PedidoID
+JOIN Produtos pr ON ip.ProdutoID = pr.ProdutoID
+ORDER BY p.PedidoID, pr.Nome;
+
+-- 3. Listar pedidos realizados por clientes da cidade de Recife
+SELECT 
+    p.PedidoID,
+    p.DataPedido,
+    c.Nome AS NomeCliente,
+    c.Cidade,
+    v.Nome AS NomeVendedor
+FROM Pedidos p
+JOIN Clientes c ON p.ClienteID = c.ClienteID
+JOIN Vendedores v ON p.VendedorID = v.VendedorID
+WHERE c.Cidade = 'Recife'
+ORDER BY p.DataPedido;
+
+-- 4. Mostrar os pedidos realizados por vendedores do setor Moda
+SELECT 
+    p.PedidoID,
+    p.DataPedido,
+    c.Nome AS NomeCliente,
+    v.Nome AS NomeVendedor,
+    v.Setor
+FROM Pedidos p
+JOIN Clientes c ON p.ClienteID = c.ClienteID
+JOIN Vendedores v ON p.VendedorID = v.VendedorID
+WHERE v.Setor = 'Moda'
+ORDER BY p.DataPedido;
+
+-- 5. Exibir os produtos da categoria Eletrônicos que já foram vendidos
+SELECT DISTINCT
+    pr.ProdutoID,
+    pr.Nome AS NomeProduto,
+    pr.Categoria,
+    pr.Preco,
+    SUM(ip.Quantidade) AS TotalVendido
+FROM Produtos pr
+JOIN ItensPedido ip ON pr.ProdutoID = ip.ProdutoID
+WHERE pr.Categoria = 'Eletrônicos'
+GROUP BY pr.ProdutoID, pr.Nome, pr.Categoria, pr.Preco
+ORDER BY pr.Nome;
+
+-- 6. Mostrar pedidos feitos pelos clientes entre 2025-10-12 e 2025-10-18
+SELECT 
+    p.PedidoID,
+    p.DataPedido,
+    c.Nome AS NomeCliente,
+    c.Cidade,
+    v.Nome AS NomeVendedor
+FROM Pedidos p
+JOIN Clientes c ON p.ClienteID = c.ClienteID
+JOIN Vendedores v ON p.VendedorID = v.VendedorID
+WHERE p.DataPedido BETWEEN '2025-10-12' AND '2025-10-18'
+ORDER BY p.DataPedido;
+
+-- 7. Listar os produtos vendidos por vendedores do setor Informática
+SELECT 
+    pr.ProdutoID,
+    pr.Nome AS NomeProduto,
+    pr.Categoria,
+    pr.Preco,
+    ip.Quantidade,
+    p.PedidoID,
+    p.DataPedido,
+    v.Nome AS NomeVendedor
+FROM ItensPedido ip
+JOIN Pedidos p ON ip.PedidoID = p.PedidoID
+JOIN Produtos pr ON ip.ProdutoID = pr.ProdutoID
+JOIN Vendedores v ON p.VendedorID = v.VendedorID
+WHERE v.Setor = 'Informática'
+ORDER BY p.DataPedido, pr.Nome;
+
+-- 8. Mostrar pedidos que incluíram o produto Notebook Lenovo
+SELECT 
+    p.PedidoID,
+    p.DataPedido,
+    c.Nome AS NomeCliente,
+    pr.Nome AS NomeProduto,
+    ip.Quantidade,
+    (ip.Quantidade * pr.Preco) AS ValorTotalItem
+FROM ItensPedido ip
+JOIN Pedidos p ON ip.PedidoID = p.PedidoID
+JOIN Produtos pr ON ip.ProdutoID = pr.ProdutoID
+JOIN Clientes c ON p.ClienteID = c.ClienteID
+WHERE pr.Nome = 'Notebook Lenovo'
+ORDER BY p.DataPedido;
+
+-- 9. Exibir pedidos realizados por clientes da Paraíba (PB)
+SELECT 
+    p.PedidoID,
+    p.DataPedido,
+    c.Nome AS NomeCliente,
+    c.Cidade,
+    c.UF,
+    v.Nome AS NomeVendedor
+FROM Pedidos p
+JOIN Clientes c ON p.ClienteID = c.ClienteID
+JOIN Vendedores v ON p.VendedorID = v.VendedorID
+WHERE c.UF = 'PB'
+ORDER BY p.DataPedido;
+
+-- 10. Mostrar os produtos vendidos (todos os produtos que foram vendidos)
+SELECT 
+    pr.ProdutoID,
+    pr.Nome AS NomeProduto,
+    pr.Categoria,
+    pr.Preco AS PrecoUnitario,
+    COUNT(DISTINCT ip.PedidoID) AS TotalPedidos,
+    SUM(ip.Quantidade) AS TotalQuantidadeVendida,
+    SUM(ip.Quantidade * pr.Preco) AS ValorTotalVendido
+FROM Produtos pr
+JOIN ItensPedido ip ON pr.ProdutoID = ip.ProdutoID
+GROUP BY pr.ProdutoID, pr.Nome, pr.Categoria, pr.Preco
+ORDER BY ValorTotalVendido DESC;
+
