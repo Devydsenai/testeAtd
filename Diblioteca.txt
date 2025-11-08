@@ -932,3 +932,515 @@ JOIN ItensPedido ip ON pr.ProdutoID = ip.ProdutoID
 GROUP BY pr.ProdutoID, pr.Nome, pr.Categoria, pr.Preco
 ORDER BY ValorTotalVendido DESC;
 
+-- ===========================================
+-- BANCO DE DADOS: XEXEIROS
+-- ===========================================
+
+CREATE DATABASE IF NOT EXISTS xexeiros;
+
+USE xexeiros;
+
+-- ===========================================
+-- TABELA CLIENTES
+-- ===========================================
+CREATE TABLE Clientes (
+    CPF CHAR(11) PRIMARY KEY,
+    Nome VARCHAR(100),
+    Email VARCHAR(100),
+    Idade INT,
+    Cidade VARCHAR(100),
+    UF CHAR(2)
+);
+
+-- ===========================================
+-- TABELA SERASA
+-- ===========================================
+CREATE TABLE Serasa (
+    CPF CHAR(11) PRIMARY KEY,
+    Nome VARCHAR(100),
+    Endereco VARCHAR(200),
+    Telefone VARCHAR(20),
+    Valor DOUBLE
+);
+
+-- ===========================================
+-- INSERINDO DADOS EM CLIENTES
+-- ===========================================
+INSERT INTO Clientes (CPF, Nome, Email, Idade, Cidade, UF) VALUES
+('12345678901', 'Maria Eduarda Alves', 'mariaeduarda@example.com', 25, 'Recife', 'PE'),
+('98765432100', 'João Pedro Ferreira', 'joaopedro@example.com', 41, 'Olinda', 'PE'),
+('11223344556', 'Camila Nogueira', 'camila.nogueira@example.com', 33, 'Jaboatão dos Guararapes', 'PE'),
+('99887766554', 'Paulo Henrique Souza', 'paulohs@example.com', 29, 'Caruaru', 'PE'),
+('88776655443', 'Renata Carvalho', 'renatac@example.com', 37, 'Garanhuns', 'PE'),
+('77665544332', 'Gustavo Silva', 'gustavos@example.com', 45, 'Petrolina', 'PE'),
+('66554433221', 'Juliana Torres', 'jtorres@example.com', 22, 'Paulista', 'PE'),
+('55443322110', 'Tiago Oliveira', 'tiagooliveira@example.com', 39, 'Recife', 'PE'),
+('44332211009', 'Cláudia Ramos', 'claudia.ramos@example.com', 51, 'Camaragibe', 'PE'),
+('33221100987', 'Fernando Barros', 'fernandob@example.com', 28, 'Olinda', 'PE'),
+('22110098765', 'Patrícia Lima', 'patricialima@example.com', 26, 'Carpina', 'PE'),
+('11009987654', 'Rodrigo Azevedo', 'rodrigoazevedo@example.com', 34, 'Recife', 'PE'),
+('55441122336', 'Halliçom', 'hallicom@example.com', 32, 'Recife', 'PE');
+
+-- ===========================================
+-- INSERINDO DADOS EM SERASA
+-- ===========================================
+INSERT INTO Serasa (CPF, Nome, Endereco, Telefone, Valor) VALUES
+('22334455667', 'Felipe Andrade', 'Rua das Rosas, 120, Olinda - PE', '(81) 98877-6655', 1520.75),
+('33445566778', 'Bruna Castro', 'Av. Boa Viagem, 950, Recife - PE', '(81) 98766-5544', 3420.90),
+('44556677889', 'Ricardo Gomes', 'Rua das Acácias, 301, Paulista - PE', '(81) 98123-7788', 289.99),
+('55667788990', 'Larissa Moura', 'Rua da Esperança, 40, Caruaru - PE', '(81) 98432-2211', 760.20),
+('66778899001', 'Marcos Paulo', 'Av. Norte, 222, Recife - PE', '(81) 98222-3344', 4589.60),
+('77889900112', 'Vanessa Rocha', 'Rua do Sol, 300, Garanhuns - PE', '(81) 98555-7788', 6800.00),
+('88990011223', 'André Santos', 'Av. Recife, 1800, Recife - PE', '(81) 98111-5566', 100.00),
+('99001122334', 'Letícia Fernandes', 'Rua das Laranjeiras, 45, Olinda - PE', '(81) 98765-4433', 9240.40),
+('10111222345', 'Thiago Brito', 'Rua das Palmeiras, 567, Paulista - PE', '(81) 98989-6767', 1330.00),
+('55441122336', 'Halliçom', 'Rua das Mangueiras, 123, Recife - PE', '(81) 98888-7777', 32750.75);
+
+-- ===========================================
+-- CONSULTAS SOLICITADAS
+-- ===========================================
+
+-- 1. Encontrar clientes que constam no Serasa. Liste o CPF, nome, cidade, UF, valor da dívida e telefone das pessoas que estão presentes nas duas tabelas. Ordenar do maior para o menor valor da dívida.
+SELECT 
+    c.CPF,
+    c.Nome,
+    c.Cidade,
+    c.UF,
+    s.Valor AS ValorDivida,
+    s.Telefone
+FROM Clientes c
+INNER JOIN Serasa s ON c.CPF = s.CPF
+ORDER BY s.Valor DESC;
+
+-- 2. Liste o nome e CPF dos clientes do Recife que possuem dívidas acima de R$ 1.000.
+SELECT 
+    c.Nome,
+    c.CPF
+FROM Clientes c
+INNER JOIN Serasa s ON c.CPF = s.CPF
+WHERE c.Cidade = 'Recife' AND s.Valor > 1000.00
+ORDER BY s.Valor DESC;
+
+-- 3. Liste todos os clientes, mostrando também o valor da dívida (quando existir). Filtre apenas os que não possuem correspondência no Serasa.
+SELECT 
+    c.CPF,
+    c.Nome,
+    c.Email,
+    c.Idade,
+    c.Cidade,
+    c.UF,
+    s.Valor AS ValorDivida
+FROM Clientes c
+LEFT JOIN Serasa s ON c.CPF = s.CPF
+WHERE s.CPF IS NULL
+ORDER BY c.Nome;
+
+-- 4. Liste o nome, telefone e valor da dívida das pessoas que estão no Serasa, mas não constam na tabela de Clientes.
+SELECT 
+    s.Nome,
+    s.Telefone,
+    s.Valor AS ValorDivida
+FROM Serasa s
+LEFT JOIN Clientes c ON s.CPF = c.CPF
+WHERE c.CPF IS NULL
+ORDER BY s.Valor DESC;
+
+-- 5. Liste as 5 maiores dívidas entre os clientes que estão cadastrados.
+SELECT 
+    c.CPF,
+    c.Nome,
+    c.Cidade,
+    c.UF,
+    s.Valor AS ValorDivida,
+    s.Telefone
+FROM Clientes c
+INNER JOIN Serasa s ON c.CPF = s.CPF
+ORDER BY s.Valor DESC
+LIMIT 5;
+
+-- 6. Mostre as informações completas do cliente Halliçom, combinando dados das duas tabelas.
+SELECT 
+    c.CPF,
+    c.Nome,
+    c.Email,
+    c.Idade,
+    c.Cidade,
+    c.UF,
+    s.Endereco,
+    s.Telefone,
+    s.Valor AS ValorDivida
+FROM Clientes c
+LEFT JOIN Serasa s ON c.CPF = s.CPF
+WHERE c.Nome = 'Halliçom';
+
+--- ============================  
+---  xexeiros;
+--- ============================
+
+CREATE DATABASE IF NOT EXISTS xexeiros;
+USE xexeiros;
+
+DROP TABLE IF EXISTS clientes;
+CREATE TABLE clientes (
+  CPF CHAR(11) PRIMARY KEY,
+  Nome VARCHAR(100),
+  Email VARCHAR(150),
+  Idade INT,
+  Cidade VARCHAR(100),
+  UF CHAR(2)
+);
+
+DROP TABLE IF EXISTS serasa;
+CREATE TABLE serasa (
+  CPF CHAR(11) PRIMARY KEY,
+  Nome VARCHAR(100),
+  Endereco VARCHAR(200),
+  Telefone VARCHAR(20),
+  Valor DOUBLE
+);
+
+-- =========================
+-- INSERTS: CLIENTES (100 registros)
+-- =========================
+INSERT INTO clientes (CPF, Nome, Email, Idade, Cidade, UF) VALUES
+('01758234900','Halliçom Imperador','hallicom.imperador@example.com',45,'Recife','PE'),
+('02345678911','Maria Oliveira','maria.oliveira@example.com',34,'Olinda','PE'),
+('03456789022','João Santos','joao.santos@example.com',52,'Paulista','PE'),
+('04567890133','Ana Beatriz','ana.beatriz@example.com',28,'Jaboatão dos Guararapes','PE'),
+('05678901244','Carlos Eduardo','carlos.eduardo@example.com',41,'Caruaru','PE'),
+('06789012355','Juliana Lima','juliana.lima@example.com',23,'Garanhuns','PE'),
+('07890123466','Pedro Henrique','pedro.henrique@example.com',37,'Petrolina','PE'),
+('08901234577','Fernanda Souza','fernanda.souza@example.com',29,'Igarassu','PE'),
+('09012345688','Lucas Gabriel','lucas.gabriel@example.com',33,'Recife','PE'),
+('10123456799','Mariana Alves','mariana.alves@example.com',31,'Olinda','PE'),
+('11234567890','Rafael Gomes','rafael.gomes@example.com',36,'Carpina','PE'),
+('12345098761','Camila Duarte','camila.duarte@example.com',27,'Ipojuca','PE'),
+('34567098783','Mariana Freitas','mariana.freitas@example.com',38,'Paulista','PE'),
+('35678098794','Pedro Carvalho','pedro.carvalho@example.com',39,'Recife','PE'),
+('36789098705','Lívia Barbosa','livia.barbosa@example.com',25,'Garanhuns','PE'),
+('37890098716','Daniel Rocha','daniel.rocha@example.com',32,'Olinda','PE'),
+('38901098727','Elaine Silva','elaine.silva@example.com',37,'Recife','PE'),
+('39012098738','Joana Melo','joana.melo@example.com',26,'Caruaru','PE'),
+('40123098749','Anderson Castro','anderson.castro@example.com',48,'Paulista','PE'),
+('41234098750','Renata Lima','renata.lima@example.com',31,'Recife','PE'),
+('42345098761','Bruno Gomes','bruno.gomes@example.com',45,'Olinda','PE'),
+('43456098772','Tatiane Alves','tatiane.alves@example.com',28,'Garanhuns','PE'),
+('44567098783','Rogério Santos','rogerio.santos@example.com',50,'Petrolina','PE'),
+('45678098794','Flávia Nogueira','flavia.nogueira@example.com',29,'Olinda','PE'),
+('46789098705','Caio Rocha','caio.rocha@example.com',34,'Recife','PE'),
+('47890098716','Larissa Souza','larissa.souza@example.com',23,'Caruaru','PE'),
+('48901098727','Matheus Dantas','matheus.dantas@example.com',30,'Paulista','PE'),
+('49012098738','Beatriz Lira','beatriz.lira@example.com',36,'Olinda','PE'),
+('50123098749','Henrique Moura','henrique.moura@example.com',41,'Recife','PE'),
+('51234098750','Silvia Andrade','silvia.andrade@example.com',27,'Caruaru','PE'),
+('52345098761','Gabriel Barros','gabriel.barros@example.com',29,'Olinda','PE'),
+('53456098772','Lorena Lima','lorena.lima@example.com',33,'Recife','PE'),
+('54567098783','Alexandre Costa','alexandre.costa@example.com',35,'Garanhuns','PE'),
+('55678098794','Paula Ribeiro','paula.ribeiro@example.com',38,'Paulista','PE'),
+('56789098705','Caio César','caio.cesar@example.com',32,'Recife','PE'),
+('57890098716','Isabela Torres','isabela.torres@example.com',26,'Olinda','PE'),
+('58901098727','Felipe Duarte','felipe.duarte@example.com',43,'Recife','PE'),
+('59012098738','Camila Rocha','camila.rocha@example.com',25,'Caruaru','PE'),
+('60123098749','Lucas Pinto','lucas.pinto@example.com',37,'Paulista','PE'),
+('61234098750','Marina Souza','marina.souza@example.com',24,'Recife','PE'),
+('62345098761','Ricardo Azevedo','ricardo.azevedo@example.com',44,'Olinda','PE'),
+('63456098772','Cláudia Silva','claudia.silva@example.com',29,'Caruaru','PE'),
+('64567098783','Jorge Lima','jorge.lima@example.com',39,'Recife','PE'),
+('65678098794','Patrícia Duarte','patricia.duarte@example.com',31,'Paulista','PE'),
+('66789098705','Mário Santos','mario.santos@example.com',41,'Olinda','PE'),
+('67890098716','Vanessa Barros','vanessa.barros@example.com',27,'Caruaru','PE'),
+('68901098727','Eduarda Nogueira','eduarda.nogueira@example.com',34,'Recife','PE'),
+('69012098738','Cláudio Mendes','claudio.mendes@example.com',46,'Paulista','PE'),
+('70123098749','Rita Campos','rita.campos@example.com',36,'Olinda','PE'),
+('71234098750','Juliano Costa','juliano.costa@example.com',29,'Garanhuns','PE'),
+('72345098761','Tainá Silva','taina.silva@example.com',28,'Caruaru','PE'),
+('73456098772','Sérgio Almeida','sergio.almeida@example.com',43,'Recife','PE'),
+('74567098783','Natália Torres','natalia.torres@example.com',25,'Paulista','PE'),
+('75678098794','Felipe Martins','felipe.martins@example.com',38,'Olinda','PE'),
+('76789098705','Clara Ramos','clara.ramos@example.com',26,'Caruaru','PE'),
+('77890098716','Wagner Costa','wagner.costa@example.com',33,'Recife','PE'),
+('78901098727','Lúcia Souza','lucia.souza@example.com',31,'Olinda','PE'),
+('79012098738','Daniela Alves','daniela.alves@example.com',27,'Caruaru','PE'),
+('80123098749','Rafael Nogueira','rafael.nogueira@example.com',38,'Recife','PE'),
+('81234098750','Michele Rocha','michele.rocha@example.com',22,'Olinda','PE'),
+('82345098761','Renan Barros','renan.barros@example.com',35,'Caruaru','PE'),
+('83456098772','Tatiana Lima','tatiana.lima2@example.com',40,'Recife','PE'),
+('84567098783','Eduardo Ramos','eduardo.ramos@example.com',28,'Paulista','PE'),
+('85678098794','Cíntia Torres','cintia.torres@example.com',30,'Olinda','PE'),
+('86789098705','Gabriela Carvalho','gabriela.carvalho@example.com',32,'Caruaru','PE'),
+('87890098716','Thiago Silva','thiago.silva@example.com',45,'Recife','PE'),
+('88901098727','Fernanda Melo','fernanda.melo@example.com',34,'Paulista','PE'),
+('89012098738','Marcelo Santos','marcelo.santos@example.com',37,'Olinda','PE'),
+('90123098749','Rafaela Duarte','rafaela.duarte@example.com',26,'Recife','PE'),
+('91234098750','Luciano Barros','luciano.barros@example.com',29,'Caruaru','PE'),
+('92345098761','Patrícia Lima','patricia.lima2@example.com',33,'Paulista','PE'),
+('93456098772','Andréa Souza','andrea.souza@example.com',36,'Olinda','PE'),
+('94567098783','Hugo Rocha','hugo.rocha@example.com',38,'Recife','PE'),
+('95678098794','Bruno Mendes','bruno.mendes@example.com',27,'Caruaru','PE'),
+('96789098705','Lívia Nogueira','livia.nogueira@example.com',35,'Olinda','PE'),
+('97890098716','Fernando Torres','fernando.torres@example.com',30,'Recife','PE'),
+('98901098727','Paula Castro','paula.castro@example.com',33,'Paulista','PE'),
+('99012098738','Jéssica Almeida','jessica.almeida@example.com',31,'Caruaru','PE'),
+('10023098741','Igor Ramos','igor.ramos@example.com',34,'Recife','PE');
+
+-- =========================
+-- INSERTS: SERASA (100 registros)
+--  - first 30 CPFs are the intersection with CLIENTES above (same CPF + name)
+--  - Halliçom Imperador has the largest Valor
+-- =========================
+
+INSERT INTO serasa (CPF, Nome, Endereco, Telefone, Valor) VALUES
+('01758234900','Halliçom Imperador','Rua da Aurora, 100, Recife - PE','(81)99999-9901',25750.90),
+('02345678911','Maria Oliveira','Av. Getúlio Vargas, 200, Olinda - PE','(81)98888-8811',875.50),
+('03456789022','João Santos','Rua do Sol, 55, Paulista - PE','(81)97777-7722',2450.00),
+('04567890133','Ana Beatriz','Rua Imperial, 80, Jaboatão - PE','(81)96666-6633',1330.00),
+('05678901244','Carlos Eduardo','Rua da Paz, 22, Caruaru - PE','(81)95555-5544',720.90),
+('06789012355','Juliana Lima','Rua XV de Novembro, 300, Garanhuns - PE','(81)94444-4455',950.00),
+('07890123466','Pedro Henrique','Rua das Flores, 120, Petrolina - PE','(81)93333-3366',1875.60),
+('08901234577','Fernanda Souza','Av. Norte, 777, Igarassu - PE','(81)92222-2277',3400.75),
+('09012345688','Lucas Gabriel','Rua Verde, 15, Recife - PE','(81)91111-1188',1580.20),
+('10123456799','Mariana Alves','Rua Azul, 23, Olinda - PE','(81)90000-0099',950.40),
+('11234567890','Rafael Gomes','Rua Sampaio, 10, Carpina - PE','(81)99911-8890',1200.00),
+('12345098761','Camila Duarte','Rua do Comércio, 7, Ipojuca - PE','(81)99822-7761',680.00),
+('13456098772','Diego Fernandes','Av. Brasil, 450, Goiana - PE','(81)99733-6652',2100.00),
+('14567098783','Larissa Monteiro','Rua das Palmeiras, 55, Cabo de Santo Agostinho - PE','(81)99644-5543',1590.50),
+('15678098794','Felipe Barbosa','Praça Central, 12, Garanhuns - PE','(81)99555-4434',2460.00),
+('16789098705','Isabela Ferreira','Rua do Mercado, 99, Recife - PE','(81)99466-3325',430.00),
+('17890098716','Tiago Moura','Av. Principal, 300, Caruaru - PE','(81)99377-2216',2990.90),
+('18901098727','Paula Ramos','Rua da Paz, 17, Petrolina - PE','(81)99288-1107',870.00),
+('19012098738','Rodrigo Castro','Rua Nova, 33, Paulista - PE','(81)99199-0098',1290.25),
+('20123098749','Letícia Farias','Rua do Limoeiro, 8, Olinda - PE','(81)99000-9989',540.00),
+('21234098750','Fábio Souza','Av. Leste, 120, Recife - PE','(81)98911-8870',1680.80),
+('22345098761','Tatiane Lima','Rua Horizonte, 66, Garanhuns - PE','(81)98822-7761',760.30),
+('23456098772','Carlos Menezes','Rua Nova, 2, Caruaru - PE','(81)98733-6652',3200.00),
+('24567098783','Roberta Duarte','Rua Sete, 44, Olinda - PE','(81)98644-5543',1150.50),
+('25678098794','André Barbosa','Rua da Guia, 88, Recife - PE','(81)98555-4434',590.00),
+('26789098705','Natália Moura','Rua Jardim, 10, Paulista - PE','(81)98466-3325',800.25),
+('27890098716','Rodrigo Silva','Rua das Laranjeiras, 6, Caruaru - PE','(81)98377-2216',2300.75),
+('28901098727','Fernanda Costa','Av. Central, 150, Olinda - PE','(81)98288-1107',400.10),
+('29012098738','Igor Santana','Rua dos Coqueiros, 9, Recife - PE','(81)98199-0098',3150.00),
+('30123098749','Priscila Araújo','Rua das Flores, 2, Garanhuns - PE','(81)98000-9989',1250.90),
+('31234098750','Thiago Ramos','Rua do Sol, 101, Recife - PE','(81)97911-8870',410.00),
+('32345098761','Amanda Tavares','Rua do Campo, 12, Caruaru - PE','(81)97822-7761',980.50),
+('33456098772','Victor Almeida','Rua Verde, 33, Olinda - PE','(81)97733-6652',2070.00);
+
+-- Fim do scriptCREATE DATABASE IF NOT EXISTS xexeiros;
+
+USE xexeiros;
+
+DROP TABLE IF EXISTS clientes;
+CREATE TABLE clientes (
+  CPF CHAR(11) PRIMARY KEY,
+  Nome VARCHAR(100),
+  Email VARCHAR(150),
+  Idade INT,
+  Cidade VARCHAR(100),
+  UF CHAR(2)
+);
+
+DROP TABLE IF EXISTS serasa;
+CREATE TABLE serasa (
+  CPF CHAR(11) PRIMARY KEY,
+  Nome VARCHAR(100),
+  Endereco VARCHAR(200),
+  Telefone VARCHAR(20),
+  Valor DOUBLE
+);
+
+-- =========================
+-- INSERTS: CLIENTES (100 registros)
+-- =========================
+INSERT INTO clientes (CPF, Nome, Email, Idade, Cidade, UF) VALUES
+('01758234900','Halliçom Imperador','hallicom.imperador@example.com',45,'Recife','PE'),
+('02345678911','Maria Oliveira','maria.oliveira@example.com',34,'Olinda','PE'),
+('03456789022','João Santos','joao.santos@example.com',52,'Paulista','PE'),
+('04567890133','Ana Beatriz','ana.beatriz@example.com',28,'Jaboatão dos Guararapes','PE'),
+('05678901244','Carlos Eduardo','carlos.eduardo@example.com',41,'Caruaru','PE'),
+('06789012355','Juliana Lima','juliana.lima@example.com',23,'Garanhuns','PE'),
+('07890123466','Pedro Henrique','pedro.henrique@example.com',37,'Petrolina','PE'),
+('08901234577','Fernanda Souza','fernanda.souza@example.com',29,'Igarassu','PE'),
+('09012345688','Lucas Gabriel','lucas.gabriel@example.com',33,'Recife','PE'),
+('10123456799','Mariana Alves','mariana.alves@example.com',31,'Olinda','PE'),
+('11234567890','Rafael Gomes','rafael.gomes@example.com',36,'Carpina','PE'),
+('12345098761','Camila Duarte','camila.duarte@example.com',27,'Ipojuca','PE'),
+('34567098783','Mariana Freitas','mariana.freitas@example.com',38,'Paulista','PE'),
+('35678098794','Pedro Carvalho','pedro.carvalho@example.com',39,'Recife','PE'),
+('36789098705','Lívia Barbosa','livia.barbosa@example.com',25,'Garanhuns','PE'),
+('37890098716','Daniel Rocha','daniel.rocha@example.com',32,'Olinda','PE'),
+('38901098727','Elaine Silva','elaine.silva@example.com',37,'Recife','PE'),
+('39012098738','Joana Melo','joana.melo@example.com',26,'Caruaru','PE'),
+('40123098749','Anderson Castro','anderson.castro@example.com',48,'Paulista','PE'),
+('41234098750','Renata Lima','renata.lima@example.com',31,'Recife','PE'),
+('42345098761','Bruno Gomes','bruno.gomes@example.com',45,'Olinda','PE'),
+('43456098772','Tatiane Alves','tatiane.alves@example.com',28,'Garanhuns','PE'),
+('44567098783','Rogério Santos','rogerio.santos@example.com',50,'Petrolina','PE'),
+('45678098794','Flávia Nogueira','flavia.nogueira@example.com',29,'Olinda','PE'),
+('46789098705','Caio Rocha','caio.rocha@example.com',34,'Recife','PE'),
+('47890098716','Larissa Souza','larissa.souza@example.com',23,'Caruaru','PE'),
+('48901098727','Matheus Dantas','matheus.dantas@example.com',30,'Paulista','PE'),
+('49012098738','Beatriz Lira','beatriz.lira@example.com',36,'Olinda','PE'),
+('50123098749','Henrique Moura','henrique.moura@example.com',41,'Recife','PE'),
+('51234098750','Silvia Andrade','silvia.andrade@example.com',27,'Caruaru','PE'),
+('52345098761','Gabriel Barros','gabriel.barros@example.com',29,'Olinda','PE'),
+('53456098772','Lorena Lima','lorena.lima@example.com',33,'Recife','PE'),
+('54567098783','Alexandre Costa','alexandre.costa@example.com',35,'Garanhuns','PE'),
+('55678098794','Paula Ribeiro','paula.ribeiro@example.com',38,'Paulista','PE'),
+('56789098705','Caio César','caio.cesar@example.com',32,'Recife','PE'),
+('57890098716','Isabela Torres','isabela.torres@example.com',26,'Olinda','PE'),
+('58901098727','Felipe Duarte','felipe.duarte@example.com',43,'Recife','PE'),
+('59012098738','Camila Rocha','camila.rocha@example.com',25,'Caruaru','PE'),
+('60123098749','Lucas Pinto','lucas.pinto@example.com',37,'Paulista','PE'),
+('61234098750','Marina Souza','marina.souza@example.com',24,'Recife','PE'),
+('62345098761','Ricardo Azevedo','ricardo.azevedo@example.com',44,'Olinda','PE'),
+('63456098772','Cláudia Silva','claudia.silva@example.com',29,'Caruaru','PE'),
+('64567098783','Jorge Lima','jorge.lima@example.com',39,'Recife','PE'),
+('65678098794','Patrícia Duarte','patricia.duarte@example.com',31,'Paulista','PE'),
+('66789098705','Mário Santos','mario.santos@example.com',41,'Olinda','PE'),
+('67890098716','Vanessa Barros','vanessa.barros@example.com',27,'Caruaru','PE'),
+('68901098727','Eduarda Nogueira','eduarda.nogueira@example.com',34,'Recife','PE'),
+('69012098738','Cláudio Mendes','claudio.mendes@example.com',46,'Paulista','PE'),
+('70123098749','Rita Campos','rita.campos@example.com',36,'Olinda','PE'),
+('71234098750','Juliano Costa','juliano.costa@example.com',29,'Garanhuns','PE'),
+('72345098761','Tainá Silva','taina.silva@example.com',28,'Caruaru','PE'),
+('73456098772','Sérgio Almeida','sergio.almeida@example.com',43,'Recife','PE'),
+('74567098783','Natália Torres','natalia.torres@example.com',25,'Paulista','PE'),
+('75678098794','Felipe Martins','felipe.martins@example.com',38,'Olinda','PE'),
+('76789098705','Clara Ramos','clara.ramos@example.com',26,'Caruaru','PE'),
+('77890098716','Wagner Costa','wagner.costa@example.com',33,'Recife','PE'),
+('78901098727','Lúcia Souza','lucia.souza@example.com',31,'Olinda','PE'),
+('79012098738','Daniela Alves','daniela.alves@example.com',27,'Caruaru','PE'),
+('80123098749','Rafael Nogueira','rafael.nogueira@example.com',38,'Recife','PE'),
+('81234098750','Michele Rocha','michele.rocha@example.com',22,'Olinda','PE'),
+('82345098761','Renan Barros','renan.barros@example.com',35,'Caruaru','PE'),
+('83456098772','Tatiana Lima','tatiana.lima2@example.com',40,'Recife','PE'),
+('84567098783','Eduardo Ramos','eduardo.ramos@example.com',28,'Paulista','PE'),
+('85678098794','Cíntia Torres','cintia.torres@example.com',30,'Olinda','PE'),
+('86789098705','Gabriela Carvalho','gabriela.carvalho@example.com',32,'Caruaru','PE'),
+('87890098716','Thiago Silva','thiago.silva@example.com',45,'Recife','PE'),
+('88901098727','Fernanda Melo','fernanda.melo@example.com',34,'Paulista','PE'),
+('89012098738','Marcelo Santos','marcelo.santos@example.com',37,'Olinda','PE'),
+('90123098749','Rafaela Duarte','rafaela.duarte@example.com',26,'Recife','PE'),
+('91234098750','Luciano Barros','luciano.barros@example.com',29,'Caruaru','PE'),
+('92345098761','Patrícia Lima','patricia.lima2@example.com',33,'Paulista','PE'),
+('93456098772','Andréa Souza','andrea.souza@example.com',36,'Olinda','PE'),
+('94567098783','Hugo Rocha','hugo.rocha@example.com',38,'Recife','PE'),
+('95678098794','Bruno Mendes','bruno.mendes@example.com',27,'Caruaru','PE'),
+('96789098705','Lívia Nogueira','livia.nogueira@example.com',35,'Olinda','PE'),
+('97890098716','Fernando Torres','fernando.torres@example.com',30,'Recife','PE'),
+('98901098727','Paula Castro','paula.castro@example.com',33,'Paulista','PE'),
+('99012098738','Jéssica Almeida','jessica.almeida@example.com',31,'Caruaru','PE'),
+('10023098741','Igor Ramos','igor.ramos@example.com',34,'Recife','PE');
+
+-- =========================
+-- INSERTS: SERASA (100 registros)
+--  - first 30 CPFs are the intersection with CLIENTES above (same CPF + name)
+--  - Halliçom Imperador has the largest Valor
+-- =========================
+
+INSERT INTO serasa (CPF, Nome, Endereco, Telefone, Valor) VALUES
+('01758234900','Halliçom Imperador','Rua da Aurora, 100, Recife - PE','(81)99999-9901',25750.90),
+('02345678911','Maria Oliveira','Av. Getúlio Vargas, 200, Olinda - PE','(81)98888-8811',875.50),
+('03456789022','João Santos','Rua do Sol, 55, Paulista - PE','(81)97777-7722',2450.00),
+('04567890133','Ana Beatriz','Rua Imperial, 80, Jaboatão - PE','(81)96666-6633',1330.00),
+('05678901244','Carlos Eduardo','Rua da Paz, 22, Caruaru - PE','(81)95555-5544',720.90),
+('06789012355','Juliana Lima','Rua XV de Novembro, 300, Garanhuns - PE','(81)94444-4455',950.00),
+('07890123466','Pedro Henrique','Rua das Flores, 120, Petrolina - PE','(81)93333-3366',1875.60),
+('08901234577','Fernanda Souza','Av. Norte, 777, Igarassu - PE','(81)92222-2277',3400.75),
+('09012345688','Lucas Gabriel','Rua Verde, 15, Recife - PE','(81)91111-1188',1580.20),
+('10123456799','Mariana Alves','Rua Azul, 23, Olinda - PE','(81)90000-0099',950.40),
+('11234567890','Rafael Gomes','Rua Sampaio, 10, Carpina - PE','(81)99911-8890',1200.00),
+('12345098761','Camila Duarte','Rua do Comércio, 7, Ipojuca - PE','(81)99822-7761',680.00),
+('13456098772','Diego Fernandes','Av. Brasil, 450, Goiana - PE','(81)99733-6652',2100.00),
+('14567098783','Larissa Monteiro','Rua das Palmeiras, 55, Cabo de Santo Agostinho - PE','(81)99644-5543',1590.50),
+('15678098794','Felipe Barbosa','Praça Central, 12, Garanhuns - PE','(81)99555-4434',2460.00),
+('16789098705','Isabela Ferreira','Rua do Mercado, 99, Recife - PE','(81)99466-3325',430.00),
+('17890098716','Tiago Moura','Av. Principal, 300, Caruaru - PE','(81)99377-2216',2990.90),
+('18901098727','Paula Ramos','Rua da Paz, 17, Petrolina - PE','(81)99288-1107',870.00),
+('19012098738','Rodrigo Castro','Rua Nova, 33, Paulista - PE','(81)99199-0098',1290.25),
+('20123098749','Letícia Farias','Rua do Limoeiro, 8, Olinda - PE','(81)99000-9989',540.00),
+('21234098750','Fábio Souza','Av. Leste, 120, Recife - PE','(81)98911-8870',1680.80),
+('22345098761','Tatiane Lima','Rua Horizonte, 66, Garanhuns - PE','(81)98822-7761',760.30),
+('23456098772','Carlos Menezes','Rua Nova, 2, Caruaru - PE','(81)98733-6652',3200.00),
+('24567098783','Roberta Duarte','Rua Sete, 44, Olinda - PE','(81)98644-5543',1150.50),
+('25678098794','André Barbosa','Rua da Guia, 88, Recife - PE','(81)98555-4434',590.00),
+('26789098705','Natália Moura','Rua Jardim, 10, Paulista - PE','(81)98466-3325',800.25),
+('27890098716','Rodrigo Silva','Rua das Laranjeiras, 6, Caruaru - PE','(81)98377-2216',2300.75),
+('28901098727','Fernanda Costa','Av. Central, 150, Olinda - PE','(81)98288-1107',400.10),
+('29012098738','Igor Santana','Rua dos Coqueiros, 9, Recife - PE','(81)98199-0098',3150.00),
+('30123098749','Priscila Araújo','Rua das Flores, 2, Garanhuns - PE','(81)98000-9989',1250.90),
+('31234098750','Thiago Ramos','Rua do Sol, 101, Recife - PE','(81)97911-8870',410.00),
+('32345098761','Amanda Tavares','Rua do Campo, 12, Caruaru - PE','(81)97822-7761',980.50),
+('33456098772','Victor Almeida','Rua Verde, 33, Olinda - PE','(81)97733-6652',2070.00);
+
+-- 1. Pessoas com o CPF presente nas duas tabelas, ordenadas pela maior dívida
+SELECT 
+    c.CPF,
+    c.Nome,
+    c.Cidade,
+    c.UF,
+    s.Valor AS ValorDivida,
+    s.Telefone
+FROM clientes c
+JOIN serasa s ON c.CPF = s.CPF
+ORDER BY s.Valor DESC;
+
+-- 2. Clientes do Recife com dívidas acima de R$ 1.000
+SELECT 
+    c.Nome,
+    c.CPF,
+    s.Valor AS ValorDivida
+FROM clientes c
+JOIN serasa s ON c.CPF = s.CPF
+WHERE c.Cidade = 'Recife'
+  AND s.Valor > 1000
+ORDER BY s.Valor DESC;
+
+-- 3. Clientes cadastrados que NÃO aparecem na Serasa
+SELECT 
+    c.CPF,
+    c.Nome,
+    c.Email,
+    c.Idade,
+    c.Cidade,
+    c.UF
+FROM clientes c
+LEFT JOIN serasa s ON c.CPF = s.CPF
+WHERE s.CPF IS NULL
+ORDER BY c.Nome;
+
+-- 4. Pessoas que estão na Serasa mas não na tabela Clientes
+SELECT 
+    s.CPF,
+    s.Nome,
+    s.Telefone,
+    s.Valor AS ValorDivida
+FROM serasa s
+LEFT JOIN clientes c ON s.CPF = c.CPF
+WHERE c.CPF IS NULL
+ORDER BY s.Valor DESC;
+
+-- 5. Top 5 maiores dívidas entre os clientes cadastrados
+SELECT 
+    c.CPF,
+    c.Nome,
+    s.Valor AS ValorDivida,
+    s.Telefone
+FROM clientes c
+JOIN serasa s ON c.CPF = s.CPF
+ORDER BY s.Valor DESC
+LIMIT 5;
+
+-- 6. Informações completas do Halliçom (cliente + Serasa)
+SELECT 
+    c.CPF,
+    c.Nome,
+    c.Email,
+    c.Idade,
+    c.Cidade,
+    c.UF,
+    s.Endereco,
+    s.Telefone,
+    s.Valor AS ValorDivida
+FROM clientes c
+LEFT JOIN serasa s ON c.CPF = s.CPF
+WHERE c.CPF = '01758234900';
