@@ -1444,3 +1444,23 @@ SELECT
 FROM clientes c
 LEFT JOIN serasa s ON c.CPF = s.CPF
 WHERE c.CPF = '01758234900';
+
+=================================================
+
+=======================
+
+======================
+1º Liste o título do filme, o nome da categoria e a descrição do filme. Ordene pelo nome da categoria e depois pelo título do filme.
+
+SELECT
+    f.title AS titulo_filme,
+    c.name AS nome_categoria,
+    f.description AS descricao_filme
+FROM
+    film f
+JOIN
+    film_category fc ON f.film_id = fc.film_id
+JOIN
+    category c ON fc.category_id = c.category_id
+ORDER BY
+    nome_categoria, titulo_filme;
