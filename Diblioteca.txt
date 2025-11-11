@@ -1309,8 +1309,8 @@ SELECT
     category.name AS category,
     film.description
 FROM film
-JOIN film_category ON film_category.film_id = film.film_id
-JOIN category ON category.category_id = film_category.category_id
+INNER JOIN film_category ON film_category.film_id = film.film_id
+INNER JOIN category ON category.category_id = film_category.category_id
 ORDER BY category.name, film.title;
 
 -- 2. Clientes e cidades
@@ -1318,8 +1318,8 @@ SELECT
     CONCAT(customer.first_name, ' ', customer.last_name) AS customer_name,
     city.city
 FROM customer
-JOIN address ON address.address_id = customer.address_id
-JOIN city ON city.city_id = address.city_id;
+INNER JOIN address ON address.address_id = customer.address_id
+INNER JOIN city ON city.city_id = address.city_id;
 
 -- 3. Funcionários e lojas
 SELECT
@@ -1327,8 +1327,8 @@ SELECT
     store.store_id,
     address.address
 FROM staff
-JOIN store ON store.store_id = staff.store_id
-JOIN address ON address.address_id = store.address_id;
+INNER JOIN store ON store.store_id = staff.store_id
+INNER JOIN address ON address.address_id = store.address_id;
 
 -- 4. Filmes alugados após 2006-01-01
 SELECT
@@ -1336,9 +1336,9 @@ SELECT
     film.title,
     rental.rental_date
 FROM rental
-JOIN inventory ON inventory.inventory_id = rental.inventory_id
-JOIN film ON film.film_id = inventory.film_id
-JOIN customer ON customer.customer_id = rental.customer_id
+INNER JOIN inventory ON inventory.inventory_id = rental.inventory_id
+INNER JOIN film ON film.film_id = inventory.film_id
+INNER JOIN customer ON customer.customer_id = rental.customer_id
 WHERE rental.rental_date > '2006-01-01'
 ORDER BY rental.rental_date;
 
@@ -1348,7 +1348,7 @@ SELECT
     payment.amount,
     payment.payment_date
 FROM payment
-JOIN customer ON customer.customer_id = payment.customer_id
+INNER JOIN customer ON customer.customer_id = payment.customer_id
 WHERE payment.amount > 5.00
 ORDER BY payment.amount DESC, payment.payment_date DESC;
 
@@ -1357,8 +1357,8 @@ SELECT
     film.title,
     film.release_year
 FROM film
-JOIN film_category ON film_category.film_id = film.film_id
-JOIN category ON category.category_id = film_category.category_id
+INNER JOIN film_category ON film_category.film_id = film.film_id
+INNER JOIN category ON category.category_id = film_category.category_id
 WHERE category.name = 'Action'
 ORDER BY film.title;
 
@@ -1367,9 +1367,9 @@ SELECT
     CONCAT(customer.first_name, ' ', customer.last_name) AS customer_name,
     CONCAT(address.address, ', ', address.district, ', ', city.city) AS full_address
 FROM customer
-JOIN address ON address.address_id = customer.address_id
-JOIN city ON city.city_id = address.city_id
-JOIN country ON country.country_id = city.country_id
+INNER JOIN address ON address.address_id = customer.address_id
+INNER JOINcity ON city.city_id = address.city_id
+INNER JOIN country ON country.country_id = city.country_id
 WHERE country.country = 'United States'
 ORDER BY customer_name;
 
@@ -1379,7 +1379,7 @@ SELECT
     inventory.inventory_id,
     inventory.store_id
 FROM inventory
-JOIN film ON film.film_id = inventory.film_id
+INNER JOIN film ON film.film_id = inventory.film_id
 WHERE inventory.store_id = 1
 ORDER BY film.title, inventory.inventory_id;
 
@@ -1389,8 +1389,8 @@ SELECT
     CONCAT(staff.first_name, ' ', staff.last_name) AS staff_name,
     payment.amount
 FROM payment
-JOIN customer ON customer.customer_id = payment.customer_id
-JOIN staff ON staff.staff_id = payment.staff_id
+INNER JOIN customer ON customer.customer_id = payment.customer_id
+INNER JOIN staff ON staff.staff_id = payment.staff_id
 ORDER BY payment.payment_date;
 
 -- 10. Devoluções com atraso > 5 dias
@@ -1400,9 +1400,9 @@ SELECT
     rental.rental_date,
     rental.return_date
 FROM rental
-JOIN inventory ON inventory.inventory_id = rental.inventory_id
-JOIN film ON film.film_id = inventory.film_id
-JOIN customer ON customer.customer_id = rental.customer_id
+INNER JOIN inventory ON inventory.inventory_id = rental.inventory_id
+INNER JOIN film ON film.film_id = inventory.film_id
+INNER JOIN customer ON customer.customer_id = rental.customer_id
 WHERE rental.return_date IS NOT NULL
-  AND DATEDIFF(rental.return_date, rental.rental_date) > 5
+  AND DATEDIFF(rental.return_date, rental.rental_date) < 5 
 ORDER BY rental.return_date;
