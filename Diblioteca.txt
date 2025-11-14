@@ -1464,3 +1464,12 @@ FROM customer
 INNER JOIN payment on payment.customer_id = customer.customer_id
 GROUP BY customer.customer_id, customer.first_name, customer.last_name
 ORDER BY gastos_totais  desc
+
+11°
+
+SELECT concat(customer.first_name, ' ',customer.last_name) as cliente, avg(payment.amount) as Gastos
+FROM customer
+INNER JOIN rental on rental.customer_id = customer.customer_id
+inner join payment on rental.rental_id = payment.rental_id
+GROUP BY customer.customer_id, customer.first_name, customer.last_name
+ORDER BY  cliente  desc
