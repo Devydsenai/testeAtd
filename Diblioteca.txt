@@ -1406,3 +1406,61 @@ INNER JOIN customer ON customer.customer_id = rental.customer_id
 WHERE rental.return_date IS NOT NULL
   AND DATEDIFF(rental.return_date, rental.rental_date) < 5 
 ORDER BY rental.return_date;
+
+===============================================================================
+
+===============================
+                              
+===============================
+1° 
+SELECT  count(*) 
+FROM vendedores
+
+2°
+SELECT *
+FROM vendedores
+where nome_loja = 'Loja Sol Nascente'
+
+3°
+SELECT   MAX(salario)
+FROM vendedores
+
+4°
+SELECT   Min(salario)
+FROM vendedores
+
+5°
+SELECT   avg(salario)
+FROM vendedores
+
+6°
+SELECT  nome_loja,  MAX(salario)
+FROM vendedores
+group by  nome_loja 
+
+order by  nome_loja
+
+7°
+SELECT  cargo,   avg(salario)
+FROM vendedores
+group by  cargo
+
+order by  cargo
+
+8°
+SELECT   sum(salario)
+FROM vendedores
+
+9°
+SELECT customer.first_name, customer.last_name, count(rental.rental_id) as total_alugueis
+FROM customer
+INNER JOIN rental on customer.customer_id = rental.customer_id
+GROUP BY customer.customer_id, customer.first_name, customer.last_name
+ORDER BY total_alugueis desc
+
+10°
+SELECT customer.first_name, customer.last_name, sum(payment.amount) as gastos_totais 
+FROM customer
+INNER JOIN payment on payment.customer_id = customer.customer_id
+GROUP BY customer.customer_id, customer.first_name, customer.last_name
+ORDER BY gastos_totais  desc
