@@ -1497,9 +1497,14 @@ ORDER BY
   category.name
 
 2. Liste o total de pagamentos recebidos por cada funcionário da locadora. 
-SELECT staff.staff_id, staff.first_name, staff.last_name, sum(payment.amount) AS total
+SELECT 
+staff.staff_id, staff.first_name, 
+staff.last_name, 
+sum(payment.amount) AS total
 FROM staff
-INNER JOIN payment ON staff.staff_id = payment.staff_id
+INNER JOIN payment 
+ON 
+staff.staff_id = payment.staff_id
   
 GROUP BY staff.staff_id, staff.first_name, staff.last_name
 
@@ -1571,61 +1576,68 @@ GROUP BY mes
 ORDER BY mes;
 
 12. Exiba a média, o valor mínimo e o valor máximo dos pagamentos recebidos por cada funcionário.
-SELECT staff.staff_id, staff.first_name, staff.last_name,
-       AVG(payment.amount) AS media, MIN(payment.amount) AS minimo, MAX(payment.amount) AS maximo
-FROM staff
-INNER JOIN payment ON staff.staff_id = payment.staff_id
+SELECT staff.staff_id, staff.first_name, staff.last_name, 
+       AVG(payment.amount) AS media, 
+       MIN(payment.amount) AS minimo, 
+       MAX(payment.amount) AS maximo 
+FROM sakila.staff 
+INNER JOIN sakila.payment ON sakila.staff.staff_id = sakila.payment.staff_id 
 GROUP BY staff.staff_id, staff.first_name, staff.last_name;
 
 13. Liste os filmes e o total de exemplares disponíveis no inventário, mesmo que o filme não tenha cópias.
-SELECT film.title, COUNT(inventory.inventory_id) AS qtd
-FROM film
-LEFT INNER JOIN inventory i ON film.film_id = inventory.film_id
-GROUP BY film.title;
+SELECT sakila.film.title, COUNT(sakila.inventory.inventory_id) AS qtd 
+FROM sakila.film 
+INNER JOIN sakila.inventory ON sakila.film.film_id = sakila.inventory.film_id 
+GROUP BY sakila.film.title 
+ORDER BY sakila.film.title;
 
 14. Mostre quais lojas possuem mais de 5 funcionários associados.
-SELECT store.store_id, COUNT(staff.staff_id) AS qtd
-FROM store
-INNER JOIN staff ON store.store_id = staff.store_id
-GROUP BY store.store_id
-HAVING COUNT(staff.staff_id) > 5;
+SELECT store.store_id, COUNT(staff.staff_id) AS qtd 
+FROM store 
+INNER JOIN staff ON store.store_id = staff.store_id 
+GROUP BY store.store_id;
 
 15. Liste cada cidade e o total de clientes cadastrados nela. 
 SELECT city.city, COUNT(customer.customer_id) AS qtd
 FROM city
 INNER JOIN address ON city.city_id = address.city_id
 INNER JOIN customer ON address.address_id = customer.address_id
-GROUP BY city.city;
+GROUP BY city.city
+ORDER BY qtd DESC, city.city;
 
 16. Liste todos os filmes que possuem mais de 5 atores associados.
 SELECT film.title, COUNT(film_actor.actor_id) AS qtd
-FROM film f
+FROM film
 INNER JOIN film_actor ON film.film_id = film_actor.film_id
 GROUP BY film.title
-HAVING COUNT(film_actor.actor_id) > 5;
+HAVING COUNT(film_actor.actor_id) > 5
+ORDER BY qtd DESC, film.title;
 
 17. Mostre o total de aluguéis realizados por cada cliente, incluindo clientes que nunca alugaram.
 SELECT customer.customer_id, customer.first_name, customer.last_name, COUNT(rental.rental_id) AS total
 FROM customer
-LEFT INNER JOIN rental ON customer.customer_id = rental.customer_id
-GROUP BY customer.customer_id, customer.first_name, customer.last_name;
+LEFT JOIN rental ON customer.customer_id = rental.customer_id
+GROUP BY customer.customer_id, customer.first_name, customer.last_name
+ORDER BY total DESC, customer.last_name, customer.first_name;
 
 18. Liste os clientes que já gastaram mais de 100 dólares em pagamentos.
 SELECT customer.customer_id, customer.first_name, customer.last_name, SUM(payment.amount) AS total
 FROM customer
 INNER JOIN payment ON customer.customer_id = payment.customer_id
 GROUP BY customer.customer_id, customer.first_name, customer.last_name
-HAVING SUM(payment.amount) > 100;
+HAVING SUM(payment.amount) > 100
+ORDER BY total DESC, customer.last_name, customer.first_name;
 
 19. Exiba as categorias e o valor total arrecadado (somando payments) pelos filmes de cada categoria. 
 SELECT category.name AS categoria, SUM(payment.amount) AS total
 FROM category
 INNER JOIN film_category ON category.category_id = film_category.category_id
-INNER JOIN film  ON film_category.film_id = film .film_id
-INNER JOIN inventory ON film .film_id = inventory.film_id
+INNER JOIN film ON film_category.film_id = film.film_id
+INNER JOIN inventory ON film.film_id = inventory.film_id
 INNER JOIN rental ON inventory.inventory_id = rental.inventory_id
 INNER JOIN payment ON rental.rental_id = payment.rental_id
-GROUP BY category.name;
+GROUP BY category.name
+ORDER BY total DESC, category.name;
 
 20. Liste os países com mais de 10 clientes cadastrados.
 SELECT country.country, COUNT(customer.customer_id) AS qtd
@@ -1634,4 +1646,5 @@ INNER JOIN city ON country.country_id = city.country_id
 INNER JOIN address ON city.city_id = address.city_id
 INNER JOIN customer ON address.address_id = customer.address_id
 GROUP BY country.country
-HAVING COUNT(customer.customer_id) > 10;
+HAVING COUNT(customer.customer_id) > 10
+ORDER BY qtd DESC, country.country;
