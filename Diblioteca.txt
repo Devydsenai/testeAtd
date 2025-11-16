@@ -1475,7 +1475,7 @@ GROUP BY customer.customer_id, customer.first_name, customer.last_name
 ORDER BY  cliente  desc
 
 =========================================
-
+Atividade 09: Agregação
 ========================================
 
 1. Liste o nome das categorias e a quantidade de filmes em cada categoria. 
