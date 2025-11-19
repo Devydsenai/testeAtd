@@ -1675,5 +1675,93 @@ on clientes (cpf);
 7° create  index idx_pedidos_status_data
 on pedidos (status, data_pedido );
 
-8° drop index idx_clientes_cidade
+8° create index idx_clientes_cidade 
+on clientes (cidade); => create cliente e cidade<
+
+drop index idx_clientes_cidade
 on clientes;
+
+=====================================
+Atividade 11: Functions
+====================================
+
+1° DELIMITER $$
+DROP FUNCTION IF EXISTS fn_nome_completo_cliente;
+
+CREATE FUNCTION fn_nome_completo_cliente (
+    p_customer_id INT,
+    p_first_name VARCHAR(45),
+    p_last_name VARCHAR(45)
+)
+RETURNS VARCHAR(100)
+DETERMINISTIC
+BEGIN
+    DECLARE nomecompleto VARCHAR(100);
+        
+    SET nomecompleto = CONCAT(p_last_name, ', ', p_first_name);
+        
+    RETURN nomecompleto;
+END $$
+
+DELIMITER ;
+
+2° DELIMITER $$
+
+
+DROP FUNCTION IF EXISTS fn_valor_estimado_locacao;
+
+CREATE FUNCTION fn_valor_estimado_locacao (
+    p_rental_duration INT,
+    p_rental_rate DECIMAL(4,2)
+)
+RETURNS DECIMAL(10,2)
+DETERMINISTIC
+BEGIN
+    
+    RETURN p_rental_duration * p_rental_rate;
+END $$
+
+2°usa a função normalmente
+SELECT 
+    film_id, 
+    title, 
+    rental_duration, 
+    rental_rate,
+    fn_valor_estimado_locacao(rental_duration, rental_rate) AS valor_estimado
+FROM 
+    film
+WHERE 
+    fn_valor_estimado_locacao(rental_duration, rental_rate) > 10.00;
+
+3° DELIMITER $$
+
+DROP FUNCTION IF EXISTS fn_classifica_duracao;
+
+CREATE FUNCTION fn_classifica_duracao (
+    p_length INT
+)
+RETURNS VARCHAR(20)
+DETERMINISTIC
+BEGIN
+    DECLARE categoria VARCHAR(20);
+
+    CASE
+        WHEN p_length IS NULL THEN SET categoria = 'SEM DADOS';
+        WHEN p_length < 60 THEN SET categoria = 'CURTO';
+        WHEN p_length BETWEEN 60 AND 120 THEN SET categoria = 'MÉDIO';
+        WHEN p_length > 120 THEN SET categoria = 'LONGO';
+        ELSE SET categoria = 'DESCONHECIDO';
+    END CASE;
+    
+    RETURN categoria;
+END $$
+3° 
+SELECT 
+    film_id, 
+    title, 
+    length, 
+    fn_classifica_duracao(length) AS categoria_duracao
+FROM 
+    film
+ORDER BY 
+    length ASC;
