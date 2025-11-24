@@ -1765,3 +1765,136 @@ FROM
     film
 ORDER BY 
     length ASC;
+
+====================================================
+Atividade 12: Stored Procedures e Triggers
+====================================================
+
+1. Stored Procedure – Listar filmes por categoria
+Crie uma stored procedure chamada sp_filmes_por_categoria que:
+- Receba como parâmetro de entrada o nome da categoria (p_category_name VARCHAR(25)).
+- Liste film_id, title, release_year de todos os filmes dessa categoria.
+- Ordene pelo title.
+Use as tabelas: film, category, film_category.
+
+2. Stored Procedure – Total de alugueis por cliente
+Crie uma stored procedure chamada sp_total_rentals_cliente que:
+- Receba como parâmetro o customer_id (p_customer_id INT).
+- Retorne (via SELECT) o nome completo do cliente e o total de alugueis realizados por ele.
+- Caso o cliente não exista ou nunca tenha alugado nada, deve retornar 0 no total.
+Use as tabelas: customer, rental.
+
+3. Stored Procedure – Inserir novo filme simplificadoCrie uma stored procedure sp_inserir_filme_simplificado que:
+- Receba: p_title, p_description, p_release_year, p_language_id, p_rental_rate, p_replacement_cost.
+- Faça o INSERT na tabela film, preenchendo esses campos e usando valores padrão razoáveis para os demais (por exemplo, rental_duration, rating etc.).
+- Retorne (SELECT) o film_id do novo filme inserido.
+Use a tabela: film.
+
+4. Trigger – Auditoria de pagamentosCrie uma tabela de auditoria payment_audit com campos:
+- audit_id (PK, auto-increment),
+- payment_id,
+- old_amount,
+- new_amount,
+- change_date (datetime),
+- operation (VARCHAR – por exemplo, 'UPDATE').
+
+Crie um trigger tr_payment_amount_update na tabela payment que:
+- Dispare BEFORE UPDATE.
+- Quando o amount for alterado, insira um registro em payment_audit com os valores antigo e novo, data/hora e operação.
+
+==================================================
+
+1️° Stored Procedure – Listar filmes por categoria
+sql
+DELIMITER $$
+
+CREATE PROCEDURE sp_filmes_por_categoria (
+    IN p_category_name VARCHAR(25)
+)
+BEGIN
+    SELECT f.film_id, f.title, f.release_year
+    FROM film f
+    INNER JOIN film_category fc ON f.film_id = fc.film_id
+    INNER JOIN category c ON fc.category_id = c.category_id
+    WHERE c.name = p_category_name
+    ORDER BY f.title;
+END $$
+
+DELIMITER ;
+2️° Stored Procedure – Total de alugueis por cliente
+sql
+DELIMITER $$
+
+CREATE PROCEDURE sp_total_rentals_cliente (
+    IN p_customer_id INT
+)
+BEGIN
+    SELECT 
+        CONCAT(c.first_name, ' ', c.last_name) AS cliente,
+        COALESCE(COUNT(r.rental_id), 0) AS total_alugueis
+    FROM customer c
+    LEFT JOIN rental r ON c.customer_id = r.customer_id
+    WHERE c.customer_id = p_customer_id
+    GROUP BY c.customer_id;
+END $$
+
+DELIMITER ;
+3️° Stored Procedure – Inserir novo filme simplificado
+sql
+DELIMITER $$
+
+CREATE PROCEDURE sp_inserir_filme_simplificado (
+    IN p_title VARCHAR(255),
+    IN p_description TEXT,
+    IN p_release_year YEAR,
+    IN p_language_id INT,
+    IN p_rental_rate DECIMAL(4,2),
+    IN p_replacement_cost DECIMAL(5,2)
+)
+BEGIN
+    INSERT INTO film (
+        title, description, release_year, language_id,
+        rental_duration, rental_rate, replacement_cost, rating
+    )
+    VALUES (
+        p_title, p_description, p_release_year, p_language_id,
+        3, p_rental_rate, p_replacement_cost, 'PG'
+    );
+
+    SELECT LAST_INSERT_ID() AS novo_film_id;
+END $$
+
+DELIMITER ;
+4️° Trigger – Auditoria de pagamentos
+Criar tabela de auditoria
+sql
+CREATE TABLE payment_audit  (
+    audit_id INT auto_increment primary key,
+    payment_id int,
+    old_amount decimal(5,2),
+    new_amount decimal(5,2),
+    change_date datetime,
+    operation varchar(20)
+);
+
+Criar trigger
+sql
+
+DELIMITER $$
+
+CREATE TRIGGER tr_payment_amount_update
+BEFORE UPDATE ON payment
+FOR EACH ROW
+
+BEGIN
+    if old.amount <> NEW.amount then
+         insert into payment_audit(
+              payment_id, old_amount, new_amount, change_date, operation
+         )
+         values (
+             old.payment_id, old.amount, new.amount, now(), 'UPDATE'
+         );
+	 end if;
+END $$
+
+DELIMITER ;  
