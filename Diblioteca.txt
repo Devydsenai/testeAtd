@@ -1898,3 +1898,79 @@ BEGIN
 END $$
 
 DELIMITER ;  
+
+=====================================================================
+Atividade 13: Usuários e Permissões
+=====================================================================
+
+Lista de Exercícios – Administração de Usuários no MySQL utilizando a base sakila
+
+1. Crie um usuário chamado leitor_sakila, com a senha read@123, e conceda a esse usuário permissão apenas de consulta (SELECT) na tabela actor do banco sakila. Em seguida, conecte-se utilizando esse usuário e tente executar um comando INSERT na tabela actor. Registre o resultado e explique o motivo do erro.
+
+2. Crie o usuário operador_sakila, com a senha oper@2025, e conceda permissões de inserção e atualização (INSERT e UPDATE) na tabela rental, sem permitir exclusão de registros. Após criar e configurar o usuário, conecte-se com ele e tente executar um comando DELETE na tabela rental, registrando o erro e justificando por que ocorreu.
+
+3. Suponha que o usuário operador_sakila tenha recebido permissão de DELETE na tabela rental. Aplique agora o comando necessário para revogar apenas a permissão de DELETE, mantendo as permissões de INSERT e UPDATE. Após o revogamento, conecte como operador_sakila e tente inserir um registro na mesma tabela para comprovar que as permissões restantes seguem válidas.
+
+4. Crie o usuário gestor_sakila, com a senha gestor@2025, atribuindo permissões que lhe permitam conceder privilégios a outros usuários (utilize a cláusula WITH GRANT OPTION). Após criar esse usuário, conecte-se com ele e conceda permissão de SELECT na tabela inventory ao usuário leitor_sakila. Ao final, explique com suas palavras o que significa conceder permissões com o uso de WITH GRANT OPTION.
+
+5. Remova todas as permissões concedidas ao usuário leitor_sakila e, logo após, exclua o usuário do MySQL. Após realizar os comandos, tente se conectar novamente utilizando as credenciais de leitor_sakila e registre o erro apresentado. Explique a diferença entre revogar privilégios e excluir definitivamente um usuário do sistema.
+
+------------------------------------------------------------
+1° -- Criar usuário
+CREATE USER 'leitor_sakila'@'localhost' IDENTIFIED BY 'read@123';
+
+-- Conceder permissão apenas de SELECT na tabela actor
+GRANT SELECT ON sakila.actor TO 'leitor_sakila'@'localhost';
+
+teste 
+-- Conectar como leitor_sakila
+mysql -u leitor_sakila -p
+
+-- Tentar inserir
+INSERT INTO sakila.actor (first_name, last_name) VALUES ('Teste', 'Usuario');
+
+2° -- Criar usuário
+CREATE USER 'operador_sakila'@'localhost' IDENTIFIED BY 'oper@2025';
+
+-- Conceder permissões de INSERT e UPDATE
+GRANT INSERT, UPDATE ON sakila.rental TO 'operador_sakila'@'localhost';
+
+teste 
+-- Conectar como operador_sakila
+mysql -u operador_sakila -p
+
+-- Tentar excluir
+DELETE FROM sakila.rental WHERE rental_id = 1;
+
+3° -- Revogar permissão de DELETE
+REVOKE DELETE ON sakila.rental FROM 'operador_sakila'@'localhost';
+
+Teste 
+-- Conectar como operador_sakila
+mysql -u operador_sakila -p
+
+-- Inserir registro
+INSERT INTO sakila.rental (rental_date, inventory_id, customer_id, staff_id)
+VALUES (NOW(), 1, 1, 1);
+
+4° -- Criar usuário
+CREATE USER 'gestor_sakila'@'localhost' IDENTIFIED BY 'gestor@2025';
+
+-- Conceder permissão com WITH GRANT OPTION
+GRANT ALL PRIVILEGES ON sakila.* TO 'gestor_sakila'@'localhost' WITH GRANT OPTION;
+
+teste 
+-- Conectar como gestor_sakila
+mysql -u gestor_sakila -p
+
+-- Conceder SELECT na tabela inventory ao leitor_sakila
+GRANT SELECT ON sakila.inventory TO 'leitor_sakila'@'localhost';
+
+5° -- Revogar todas as permissões
+REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'leitor_sakila'@'localhost';
+
+-- Excluir usuário
+DROP USER 'leitor_sakila'@'localhost';
+
+teste 
+mysql -u leitor_sakila -p
